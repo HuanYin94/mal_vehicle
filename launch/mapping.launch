@@ -1,0 +1,58 @@
+<!-- 
+FP: 30 Jan. 2013
+
+Files tuned for ethzasl_icp_mapping commit 52d78c96c2cf2f58a400c649c561dbfec95e41a4
+and for libpointmatcher commit e048c4d1180b1de005af072bf137ea4d8cf2b826
+
+Parameters for ICRA 2014: "Long-term 3D map maintenance in dynamic environments"
+-->
+
+<!--
+ZHENHUA PROJECT IN SUMMER
+-->
+
+<launch>
+	<param name ="/use_sim_time" value="true"/>
+
+	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="1.95685 -2.19474 -0.1 -0.017 -0.0104 -0.521 -0.853 laser2 laser1 50" />
+
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find mal_vehiclecd/cfg/zhenhua.rviz" output="screen"/>	
+
+	<node name="mapping" type="mapping" pkg="mal_vehicle" output="screen" >
+		
+		<param name="odom_frame" value="/laser2" />
+		<remap from="cloud_in" to="/velodyne2/velodyne_points" />
+
+		<param name="subscribe_scan" value="false"/>
+		<param name="icpConfig" value="$(find mal_vehicle)/cfg/icp_dynamic.yaml" />
+		<param name="inputFiltersConfig" value="$(find mal_vehicle)/cfg/input_filters.yaml" />
+        <param name="mapPostFiltersConfig" value="$(find mal_vehicle)/cfg/mapPost_filters.yaml" />
+		
+		<!--Put that back! -->
+		
+		<param name="map_frame" value="/map" />
+		<param name="useROSLogger" value="true" />
+		<param name="inputQueueSize" value="1" />
+		<param name="tfRefreshPeriod" value="0.005" />
+		<param name="minOverlap" value="0.6" /> 
+		<param name="maxOverlapToMerge" value="0.99" /> 
+		<param name="minReadingPointCount" value="1000" /> 
+		<param name="minMapPointCount" value="10000" /> <!-- quick fix to have map published each time -->
+
+		<!-- Parameters for dynamic elements -->
+		<param name="priorStatic" value="0.8"/>
+		<param name="priorDyn" value="0.2"/>
+		<param name="maxAngle" value="0.04"/>
+		<param name="eps_a" value="0.20"/>
+		<param name="eps_d" value="0.1"/>
+		<param name="alpha" value="0.99"/>
+		<param name="beta" value="0.90"/>
+		<param name="maxDyn" value="0.90"/>
+		<param name="maxDistNewPoint" value="0.05"/>
+		
+		<!--param name="savePoseFileName" value="/home/yh/some_zhenhua/2019.06.09/laser1_14-24-06.txt"/-->
+		<param name="savePoseFileName" value="/home/yh/some_zhenhua/2019.06.09/test.txt"/>
+
+	</node>
+
+</launch>
