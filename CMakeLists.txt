@@ -29,9 +29,30 @@ ${catkin_LIBRARIES}
 ${libpointmatcher_LIBRARIES}
 )
 
-#add_executable(odom_pub src/mapping.cpp)
-#target_link_libraries(mapping
-#${catkin_LIBRARIES}
-#)
+add_executable(map_transformer src/map_transformer.cpp)
+target_link_libraries(map_transformer
+${catkin_LIBRARIES}
+${libpointmatcher_LIBRARIES}
+)
+
+add_executable(map_filter src/map_filter.cpp)
+target_link_libraries(map_filter
+${catkin_LIBRARIES}
+${libpointmatcher_LIBRARIES}
+)
+
+add_executable(loc_demo src/loc_demo.cpp)
+target_link_libraries(loc_demo
+${catkin_LIBRARIES}
+)
+
+add_executable(laser_reg src/laser_reg.cpp)
+target_link_libraries(laser_reg
+${catkin_LIBRARIES}
+)
+
+
+
+
 
 

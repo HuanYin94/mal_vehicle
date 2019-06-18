@@ -16,7 +16,7 @@ ZHENHUA PROJECT IN SUMMER
 
 	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="1.95685 -2.19474 -0.1 -0.017 -0.0104 -0.521 -0.853 laser2 laser1 50" />
 
-	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find mal_vehiclecd/cfg/zhenhua.rviz" output="screen"/>	
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find mal_vehiclecd/cfg/mapping/zhenhua.rviz" output="screen"/>	
 
 	<node name="mapping" type="mapping" pkg="mal_vehicle" output="screen" >
 		
@@ -24,9 +24,9 @@ ZHENHUA PROJECT IN SUMMER
 		<remap from="cloud_in" to="/velodyne2/velodyne_points" />
 
 		<param name="subscribe_scan" value="false"/>
-		<param name="icpConfig" value="$(find mal_vehicle)/cfg/icp_dynamic.yaml" />
-		<param name="inputFiltersConfig" value="$(find mal_vehicle)/cfg/input_filters.yaml" />
-        <param name="mapPostFiltersConfig" value="$(find mal_vehicle)/cfg/mapPost_filters.yaml" />
+		<param name="icpConfig" value="$(find mal_vehicle)/cfg/mapping/map_icp_dynamic.yaml" />
+		<param name="inputFiltersConfig" value="$(find mal_vehicle)/cfg/mapping/map_input_filters.yaml" />
+        <param name="mapPostFiltersConfig" value="$(find mal_vehicle)/cfg/mapping/mapPost_filters.yaml" />
 		
 		<!--Put that back! -->
 		

@@ -56,7 +56,7 @@ class Mapper
 	ros::Subscriber scanSub;
 	ros::Subscriber cloudSub;
 
-    // another velodyne, by yh for zhenhua proj
+    // another velodyne, by yh for zhenhua project
     ros::Subscriber cloudSub_new;
     void gotCloud_new(const sensor_msgs::PointCloud2& cloudMsgIn);
     DP cloud_laser1;
@@ -1226,7 +1226,7 @@ void Mapper::loadExternalParameters()
 	if (ros::param::get("~inputFiltersConfig", configFileName))
 	{
 		ifstream ifs(configFileName.c_str());
-		if (ifs.good())
+        if (ifs.good())
 		{
 			inputFilters = PM::DataPointsFilters(ifs);
 		}
@@ -1293,7 +1293,7 @@ int main(int argc, char **argv)
 	ros::spin();
 
     // save the map here
-    mapper.mapPointCloud->save("/home/yh/map_zhenhua__.vtk");
+    mapper.mapPointCloud->save("/home/yh/map_test.vtk");
 
 	return 0;
 }

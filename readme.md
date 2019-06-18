@@ -3,4 +3,8 @@
 
 2019.05.31 data
 
-mapping:   use two laser sensors to build a dense map
+calib.launch:      to see the calib result of two lasers
+
+mapping:           use two laser sensors to build a dense map
+
+map_transformer:   transform the map according to the tfs, once

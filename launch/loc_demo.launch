@@ -1,0 +1,21 @@
+
+<launch>
+	
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find mal_vehicle)/cfg/loc_demo.rviz" output="screen"/>	
+
+	<param name="robot_description" textfile="$(find mal_vehicle)/cfg/zhenhua_vehicle.urdf" />
+	<param name="use_gui" value="false"/>
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+
+	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="1.95685 -2.19474 -0.1 -0.017 -0.0104 -0.521 -0.853 laser2 laser1 50" />
+    <node pkg="tf" type="static_transform_publisher" name="link2_broadcaster" args="7.5012 1.4813 0.962 0 0 -0.3431 0.9393 base_footprint laser2 50" />
+
+
+	<node pkg="mal_vehicle" type="loc_demo" name="loc_demo" output="screen" >
+
+		<param name="loadMapName" value="/home/yh/zhenhua_some/2019.06.18/map_zhenhua_in_mag_world.vtk"/>
+
+	</node>
+
+</launch>
