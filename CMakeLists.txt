@@ -51,6 +51,10 @@ target_link_libraries(laser_reg
 ${catkin_LIBRARIES}
 )
 
+add_executable(odom_may src/odom_may.cpp)
+target_link_libraries(odom_may
+${catkin_LIBRARIES}
+)
 
 
 

@@ -9,6 +9,8 @@
 #include "ros/publisher.h"
 #include "ros/subscriber.h"
 
+#include "geometry_msgs/Pose2D.h"
+
 #include "pointmatcher_ros/transform.h"
 #include "pointmatcher_ros/point_cloud.h"
 #include "nabo/nabo.h"
@@ -16,6 +18,8 @@
 
 #include <fstream>
 #include <visualization_msgs/Marker.h>
+
+#define DELTA_TIME 0.02
 
 using namespace std;
 using namespace Eigen;
@@ -33,14 +37,37 @@ public:
     ros::NodeHandle& n;
 
     ros::Subscriber mag_pose_sub;
+    ros::Subscriber icp_pose_sub;
+    ros::Subscriber odom_sub;
+
     tf::TransformListener tf_listener_base2world;
     tf::TransformBroadcaster tf_broader_base2world;
 
+    // three messages
     void gotMag(const geometry_msgs::PointStamped& magMsgIn);
+    void gotIcp(const geometry_msgs::Pose2D& icpMsgIn);
+    void gotOdom(const nav_msgs::Odometry& odomMsgIn);
 
     int magCnt;
+    int mag_init_int;
 
-    PM::TransformationParameters mag2PMTransform(geometry_msgs::PointStamped pointIn);
+    // EKF sth.
+    Vector3f veh_sta;
+
+    Matrix3f conv;
+    Matrix3f jacob_F;
+    Matrix3f jacob_H;
+    Matrix3f noise_R; // motion noise
+    Matrix3f noise_P; // laser noise
+    Matrix3f noise_Q; // mag noise
+    Matrix3f gain_K;
+    Matrix3f matrix_I;
+
+    void publishTF(Vector3f pose);
+
+    PM::TransformationParameters Pose2DToRT3D(Vector3f input);
+
+    bool init_flag;
 
 };
 
@@ -48,31 +75,57 @@ loc_demo::~loc_demo()
 {}
 
 loc_demo::loc_demo(ros::NodeHandle& n):
-    n(n)
+    n(n),
+    mag_init_int(getParam<int>("mag_init_int", 0))
 {
-    magCnt = 0;
+    magCnt = 0; // count in initial
+    veh_sta << 0,0,0;
+    noise_R = 0.1*Matrix3f::Identity();
+    noise_P = 0.01*Matrix3f::Identity();
+    noise_Q = 0.001*Matrix3f::Identity();
+    matrix_I = 1*Matrix3f::Identity();
+
+    // jacob = identity for icp & mag
+    jacob_H = Matrix3f::Identity();
+
+    init_flag = false;
 
     mag_pose_sub = n.subscribe("mag_pose", 1, &loc_demo::gotMag, this);
+    icp_pose_sub = n.subscribe("icp_pose", 1, &loc_demo::gotIcp, this);
+    odom_sub = n.subscribe("wheel_odom", 1, &loc_demo::gotOdom, this);
 
 }
 
 void loc_demo::gotMag(const geometry_msgs::PointStamped &magMsgIn)
 {
-    cout<<"-------------------!!!!-------------------"<<endl;
-    cout<<magMsgIn.point.x<<"   "
-        <<magMsgIn.point.y<<"   "
-        <<magMsgIn.point.z<<endl;
+    if(!init_flag)
+    {
+        veh_sta(0) = magMsgIn.point.x;
+        veh_sta(1) = magMsgIn.point.y;
+        veh_sta(2) = magMsgIn.point.z;
+
+        conv = 0*Matrix3f::Identity();
+
+        init_flag = true;
+        return;
+    }
+
+    cout<<"-------------------Mag-------------------"<<endl;
 
     geometry_msgs::PointStamped mag_pose = magMsgIn;
 
-    if(magCnt <= 100 )
+    if(magCnt <= mag_init_int )
     {
+        cout<<">>>>IN"<<endl;
 
-        PM::TransformationParameters T_base2world = this->mag2PMTransform(mag_pose);
+        Vector3f mag_pose( magMsgIn.point.x, magMsgIn.point.y, magMsgIn.point.z);
+        gain_K = jacob_H * conv * jacob_H.transpose() + noise_Q;
+        veh_sta = veh_sta + gain_K * (mag_pose - jacob_H * veh_sta);
+        conv = (matrix_I - gain_K*jacob_H) * conv;
 
-        tf_broader_base2world.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(T_base2world, "world", "base_footprint", magMsgIn.header.stamp));
+        cout<<"veh:     "<<veh_sta.transpose()<<endl;
 
-        cout<<"Maging"<<endl;
+        this->publishTF(veh_sta);
 
     }
 
@@ -80,15 +133,68 @@ void loc_demo::gotMag(const geometry_msgs::PointStamped &magMsgIn)
 
 }
 
-loc_demo::PM::TransformationParameters loc_demo::mag2PMTransform(geometry_msgs::PointStamped pointIn)
+void loc_demo::gotIcp(const geometry_msgs::Pose2D &icpMsgIn)
+{
+    cout<<"-------------------icp-------------------"<<endl;
+
+    if(veh_sta(0) == 0)
+        return;
+
+    Vector3f icp_pose( icpMsgIn.x, icpMsgIn.y, icpMsgIn.theta);
+
+    gain_K = jacob_H * conv * jacob_H.transpose() + noise_P;
+
+    veh_sta = veh_sta + gain_K * (icp_pose - jacob_H * veh_sta);
+
+    conv = (matrix_I - gain_K*jacob_H) * conv;
+
+    cout<<"veh:     "<<veh_sta.transpose()<<endl;
+
+    this->publishTF(veh_sta);
+
+}
+
+void loc_demo::gotOdom(const nav_msgs::Odometry &odomMsgIn)
+{
+    cout<<"-------------------odom-------------------"<<endl;
+
+    if(veh_sta(0) == 0)
+        return;
+
+    float lastOrient = veh_sta(2);
+
+    veh_sta(0) = cos(veh_sta(2))*DELTA_TIME*odomMsgIn.twist.twist.linear.x - sin(veh_sta(2))*DELTA_TIME*odomMsgIn.twist.twist.linear.y + veh_sta(0);
+    veh_sta(1) = sin(veh_sta(2))*DELTA_TIME*odomMsgIn.twist.twist.linear.x + cos(veh_sta(2))*DELTA_TIME*odomMsgIn.twist.twist.linear.y + veh_sta(1);
+    veh_sta(2) = veh_sta(2) + odomMsgIn.twist.twist.angular.x*DELTA_TIME;
+
+    jacob_F << 1, 0, -sin(lastOrient)*DELTA_TIME*odomMsgIn.twist.twist.linear.x - cos(lastOrient)*DELTA_TIME*odomMsgIn.twist.twist.linear.y,
+               0, 1, cos(lastOrient)*DELTA_TIME*odomMsgIn.twist.twist.linear.x - sin(lastOrient)*DELTA_TIME*odomMsgIn.twist.twist.linear.y,
+               0, 0, 1;
+
+    conv = jacob_F*conv*jacob_F.transpose() + this->noise_R;
+
+    cout<<"veh:     "<<veh_sta.transpose()<<endl;
+
+    this->publishTF(veh_sta);
+
+}
+
+void loc_demo::publishTF(Vector3f pose)
+{
+    PM::TransformationParameters T_base2world = this->Pose2DToRT3D(pose);
+    tf_broader_base2world.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(T_base2world, "world", "base_footprint", ros::Time::now()));
+}
+
+loc_demo::PM::TransformationParameters loc_demo::Pose2DToRT3D(Vector3f input)
 {
     PM::TransformationParameters t = PM::TransformationParameters::Identity(4, 4);
-    t(0,3) = pointIn.point.x; t(1,3) = pointIn.point.y;
-    AngleAxisf V1(pointIn.point.z, Vector3f(0, 0, 1));
+    t(0,3) = input(0); t(1,3) = input(1);
+    AngleAxisf V1(input(2), Vector3f(0, 0, 1));
     Matrix3f R1 = V1.toRotationMatrix();
     t.block(0,0,3,3) = R1;
     return t;
 }
+
 
 int main(int argc, char **argv)
 {

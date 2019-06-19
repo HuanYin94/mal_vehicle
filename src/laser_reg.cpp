@@ -9,6 +9,8 @@
 #include "ros/publisher.h"
 #include "ros/subscriber.h"
 
+#include "geometry_msgs/Pose2D.h"
+
 #include "pointmatcher_ros/transform.h"
 #include "pointmatcher_ros/point_cloud.h"
 #include "nabo/nabo.h"
@@ -65,6 +67,11 @@ public:
 
     long int mapPubCnt;
 
+    geometry_msgs::Pose2D icp_pose_msg;
+    ros::Publisher posePublisher;
+
+    geometry_msgs::Pose2D  PMTransform2Pose2D(PM::TransformationParameters RT);
+
 };
 
 laser_reg::~laser_reg()
@@ -105,6 +112,8 @@ laser_reg::laser_reg(ros::NodeHandle& n):
     {
         inputFilters = PM::DataPointsFilters(ifs);
     }
+
+    posePublisher = n.advertise<geometry_msgs::Pose2D>( "icp_pose", 1 );
 
     cloud_sub1 = n.subscribe("/velodyne1/velodyne_points", 1, &laser_reg::gotCloud1, this);
     cloud_sub2 = n.subscribe("/velodyne2/velodyne_points", 1, &laser_reg::gotCloud2, this);
@@ -193,8 +202,11 @@ void laser_reg::registration(DP cloudIn, const ros::Time& stamp)
 
         PM::TransformationParameters T_base2world_new = T_laser22world_new * T_laser22base.inverse();
 
-        tf_broader_base2world.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(T_base2world_new, "world", "base_footprint", stamp));
+//        tf_broader_base2world.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(T_base2world_new, "world", "base_footprint", stamp));
 
+        ///no tf publish, send as an observation message to ekf-loc
+        icp_pose_msg = this->PMTransform2Pose2D(T_base2world_new);
+        posePublisher.publish(icp_pose_msg);
     }
     catch (PM::ConvergenceError error)
     {
@@ -202,6 +214,13 @@ void laser_reg::registration(DP cloudIn, const ros::Time& stamp)
         return;
     }
 
+}
+
+geometry_msgs::Pose2D laser_reg::PMTransform2Pose2D(PM::TransformationParameters RT)
+{
+    geometry_msgs::Pose2D p;
+    p.x = RT(0,3); p.y = RT(1,3); p.theta = std::atan2(RT(1,0), RT(0,0));
+    return p;
 }
 
 int main(int argc, char **argv)
