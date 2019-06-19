@@ -5,6 +5,7 @@
 		
 		<param name="loadMapName" value="/home/yh/zhenhua_some/2019.06.18/map_zhenhua_in_mag_world_filtered.vtk"/>
 		<param name="inputFilterYamlName" value="$(find mal_vehicle)/cfg/loc_input_filters.yaml"/>
+		<param name="icpYamlName" value="$(find mal_vehicle)/cfg/loc_input_filters.yaml"/>
 
 	</node>
 
