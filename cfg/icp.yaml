@@ -1,6 +1,6 @@
 readingDataPointsFilters:
   - RandomSamplingDataPointsFilter:
-      prob: 1.0
+      prob: 0.8
 
 referenceDataPointsFilters:
 #  - MaxDistDataPointsFilter:
@@ -32,15 +32,15 @@ transformationCheckers:
       minDiffTransErr: 0.01
       smoothLength: 2
   - CounterTransformationChecker:
-      maxIterationCount: 60
+      maxIterationCount: 40
   - BoundTransformationChecker:
       maxRotationNorm: 0.8
-      maxTranslationNorm: 30.00
+      maxTranslationNorm: 20.00
 
 inspector:
 	VTKFileInspector
 #	NullInspector
 
 logger:
-	FileLogger
-#	NullLogger
+#	FileLogger
+	NullLogger

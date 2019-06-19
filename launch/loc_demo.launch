@@ -1,6 +1,8 @@
 
 <launch>
 	
+	<param name ="/use_sim_time" value="true"/>
+
 	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find mal_vehicle)/cfg/loc_demo.rviz" output="screen"/>	
 
 	<param name="robot_description" textfile="$(find mal_vehicle)/cfg/zhenhua_vehicle.urdf" />

@@ -63,6 +63,8 @@ public:
     PM::TransformationParameters T_base2world;
     PM::TransformationParameters T_laser22world;
 
+    long int mapPubCnt;
+
 };
 
 laser_reg::~laser_reg()
@@ -75,26 +77,33 @@ laser_reg::laser_reg(ros::NodeHandle& n):
     inputFilterYamlName(getParam<string>("inputFilterYamlName", ".")),
     icpYamlName(getParam<string>("icpYamlName", "."))
 {
+
     /// prepare, load yamls
+    // set icp
+    ifstream ifss(icpYamlName.c_str());
+    if (ifss.good())
+    {
+        icp.loadFromYaml(ifss);
+        cout<<"SET"<<endl;
+    }
+    else
+    {
+        cout<<"UNSET"<<endl;
+    }
+
     mapCloud = DP::load(loadMapName);
     if(!icp.hasMap())
     {
         icp.setMap(mapCloud);
     }
-    mapPublisher.publish(PointMatcher_ros::pointMatcherCloudToRosMsg<float>(mapCloud, "world", ros::Time::now()));
+    mapPublisher = n.advertise<sensor_msgs::PointCloud2>( "map", 1 );
+    mapPubCnt = 0;
 
-    // 1
+    // set filter
     ifstream ifs(inputFilterYamlName.c_str());
     if (ifs.good())
     {
         inputFilters = PM::DataPointsFilters(ifs);
-    }
-
-    // 2
-    ifstream ifss(icpYamlName.c_str());
-    if (ifss.good())
-    {
-        icp.loadFromYaml(ifss);
     }
 
     cloud_sub1 = n.subscribe("/velodyne1/velodyne_points", 1, &laser_reg::gotCloud1, this);
@@ -111,7 +120,7 @@ void laser_reg::gotCloud1(const sensor_msgs::PointCloud2& cloudMsgIn)
                this->tf_listener_calib_lasers,
                "laser1",
                "laser2",
-               cloudMsgIn.header.stamp
+               ros::Time::now()
            ), laserCloud1.getHomogeneousDim());
 
     laserCloud1 = transformation->compute(laserCloud1, this->T_laser12.inverse());
@@ -142,33 +151,56 @@ void laser_reg::registration(DP cloudIn, const ros::Time& stamp)
 
     cout<<"-------------------!!!!-------------------"<<endl;
 
-    ROS_INFO_STREAM("input points' num:  " << cloudIn.features.cols());
+    // publish map
+    if(mapPubCnt%10 == 0)
+        mapPublisher.publish(PointMatcher_ros::pointMatcherCloudToRosMsg<float>(mapCloud, "world", ros::Time::now()));
+    mapPubCnt++;
 
-    this->T_base2world = PointMatcher_ros::eigenMatrixToDim<float>(
-               PointMatcher_ros::transformListenerToEigenMatrix<float>(
-               this->tf_listener_base2world,
-               "world",
-               "base_footprint",
-               stamp
-           ), cloudIn.features.rows());
+//    ROS_INFO_STREAM("input points' num:  " << cloudIn.features.cols());
 
     this->T_laser22base = PointMatcher_ros::eigenMatrixToDim<float>(
                PointMatcher_ros::transformListenerToEigenMatrix<float>(
                this->tf_listener_calib_laser2basefootprint,
                "base_footprint",
                "laser2",
-               stamp
+                ros::Time(0)
            ), cloudIn.features.rows());
 
-    T_laser22world = T_laser22base * T_base2world;
+    this->T_base2world = PointMatcher_ros::eigenMatrixToDim<float>(
+               PointMatcher_ros::transformListenerToEigenMatrix<float>(
+               this->tf_listener_base2world,
+               "world",
+               "base_footprint",
+               ros::Time::now()
+           ), cloudIn.features.rows());
 
-    PM::TransformationParameters T_laser22world_new = icp(cloudIn, T_laser22world);
+    T_laser22world = T_base2world * T_laser22base;
 
-    ROS_INFO_STREAM("icp over_lap:  " << icp.errorMinimizer->getOverlap());
+//    cout<<T_laser22base<<endl;
+//    cout<<" "<<endl;
+//    cout<<T_base2world<<endl;
+//    cout<<" "<<endl;
+//    cout<<T_laser22world<<endl;
 
-    PM::TransformationParameters T_base2world_new = T_laser22base.inverse() * T_laser22world_new;
+    try
+    {
+        double t0 = ros::Time::now().toSec();
+        PM::TransformationParameters T_laser22world_new = icp(cloudIn, T_laser22world);
+        double t1 = ros::Time::now().toSec();
+        cout<<"Time cost:   "<<t1-t0<<" seconds."<<endl;
 
-    tf_broader_base2world.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(T_base2world_new, "world", "base_footprint", stamp));
+        ROS_INFO_STREAM("icp over_lap:  " << icp.errorMinimizer->getOverlap());
+
+        PM::TransformationParameters T_base2world_new = T_laser22world_new * T_laser22base.inverse();
+
+        tf_broader_base2world.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(T_base2world_new, "world", "base_footprint", stamp));
+
+    }
+    catch (PM::ConvergenceError error)
+    {
+        ROS_ERROR_STREAM("[ICP] failed to converge: " << error.what());
+        return;
+    }
 
 }
 
