@@ -18,7 +18,7 @@
 
 	<node pkg="mal_vehicle" type="loc_demo" name="loc_demo" output="screen" >
 		
-		<param name="mag_init_int" value="100"/>
+		<param name="mag_init_int" value="1000000"/>
 
 	</node>
 

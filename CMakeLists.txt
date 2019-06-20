@@ -61,7 +61,10 @@ target_link_libraries(sender_udp
 ${catkin_LIBRARIES}
 )
 
-
+add_executable(recorder src/recorder.cpp)
+target_link_libraries(recorder
+${catkin_LIBRARIES}
+)
 
 
 

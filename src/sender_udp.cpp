@@ -20,12 +20,22 @@
 #include "tf/transform_listener.h"
 #include "geometry_msgs/Pose2D.h"
 
+#include "pointmatcher_ros/transform.h"
+#include "pointmatcher_ros/point_cloud.h"
+#include "nabo/nabo.h"
+#include "pointmatcher_ros/get_params_from_server.h"
+
+
 #define PORT    8844
 #define MAXLINE 1024
 #define BYTENUM 30 // 16 + 4*3 + 2
 #define SLEEPSEC 50000 //20Hz // 10e6 = 1s
 
 using namespace std;
+using namespace Eigen;
+using namespace PointMatcherSupport;
+
+typedef PointMatcher<float> PM;
 
 struct header
 {
@@ -52,8 +62,19 @@ struct sockaddr_in servaddr;
 
 unsigned short int idCnt = 0x0000;
 
-void senderCallback(const geometry_msgs::Pose2D::ConstPtr& msg)
+Vector3f RT3D2Pose2D(PM::TransformationParameters RT)
 {
+    Vector3f pose(RT(0,3), RT(1,3), std::atan2(RT(1,0), RT(0,0)));
+    return pose;
+}
+
+void senderCallback(PM::TransformationParameters T_base2world)
+{
+
+    // 4x4 RT Matrix to pose-2D
+    Vector3f pose = RT3D2Pose2D(T_base2world);
+
+    /// udp, sth.
     udpMsg toVeh;
 
     toVeh.Header.flag = 0xcece;
@@ -63,9 +84,9 @@ void senderCallback(const geometry_msgs::Pose2D::ConstPtr& msg)
     toVeh.Header.sec = ros::Time::now().toSec();
     toVeh.Header.miliSec = ros::Time::now().toNSec();
 
-    toVeh.pose_x = msg->x;
-    toVeh.pose_y = msg->y;
-    toVeh.heading = msg->theta;
+    toVeh.pose_x = pose(0);
+    toVeh.pose_y = pose(1);
+    toVeh.heading = pose(2);
     toVeh.status = 1;
 
     memcpy(buffer, &toVeh, sizeof(toVeh));
@@ -105,17 +126,30 @@ int main(int argc, char **argv)
     servaddr.sin_port = htons(PORT);
     servaddr.sin_addr.s_addr = inet_addr("192.168.1.12");
 
-    while+(n.ok())
+
+    PM::TransformationParameters T_base2world;
+    tf::TransformListener listener;
+    ros::Rate rate(20.0);
+    while(n.ok())
     {
+        T_base2world = PointMatcher_ros::eigenMatrixToDim<float>(
+                   PointMatcher_ros::transformListenerToEigenMatrix<float>(
+                   listener,
+                   "world",
+                   "base_footprint",
+                   ros::Time::now()
+               ), 4);
+
+        senderCallback(T_base2world);
+
+        rate.sleep();
 
     }
 
 
 //    ros::Subscriber sub = n.subscribe("veh_sta_udp", 1, senderCallback);
 
-
-
-    ros::spin();
+//    ros::spin();
 
     return 0;
 }

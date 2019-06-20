@@ -15,4 +15,6 @@ laser_reg:		   registration part, send icp pose to loc part
 
 loc_demo:          ekf localization
 
-sender:	           listen tf, send the udf msg to vehicle
+sender_udp:	       listen tf, send the udf msg to vehicle
+
+recorder:		   record poses for comparison
