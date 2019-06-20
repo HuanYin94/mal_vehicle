@@ -167,6 +167,10 @@ void laser_reg::registration(DP cloudIn, const ros::Time& stamp)
         mapPublisher.publish(PointMatcher_ros::pointMatcherCloudToRosMsg<float>(mapCloud, "world", ros::Time::now()));
     mapPubCnt++;
 
+    /// if do icp registration ?
+//    return;
+    /// yh 0_0
+
 //    ROS_INFO_STREAM("input points' num:  " << cloudIn.features.cols());
 
     this->T_laser22base = PointMatcher_ros::eigenMatrixToDim<float>(

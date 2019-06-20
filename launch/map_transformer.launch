@@ -7,7 +7,7 @@
 		<param name="x1" value="7.5012"/>
 		<param name="y1" value="1.4813"/>
 		<param name="z1" value="0.962"/>
-		<param name="yaw1" value="-0.70045"/>
+		<param name="yaw1" value="-0.7418"/>
 		
 		<!--first frame of mag message when mapping, from rosbag-->
 		<param name="x2" value="50.1408"/>
@@ -15,7 +15,7 @@
 		<param name="yaw2" value="0.0011"/>
 		
 		<param name="loadMapName" value="/home/yh/map_zhenhua__.vtk"/>
-		<param name="saveMapName" value="/home/yh/zhenhua_some/2019.06.18/map_zhenhua_in_mag_world.vtk"/>
+		<param name="saveMapName" value="/home/yh/zhenhua_some/2019.06.20/map_zhenhua_in_mag_world.vtk"/>
 
 	</node>
 
