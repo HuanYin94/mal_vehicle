@@ -1,0 +1,9 @@
+
+<launch>
+	
+	<node pkg="mal_vehicle" type="sender_udp" name="sender_udp" output="screen" >
+		
+
+	</node>
+
+</launch>

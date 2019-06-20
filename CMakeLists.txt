@@ -56,6 +56,11 @@ target_link_libraries(odom_may
 ${catkin_LIBRARIES}
 )
 
+add_executable(sender_udp src/sender_udp.cpp)
+target_link_libraries(sender_udp
+${catkin_LIBRARIES}
+)
+
 
 
 

@@ -8,3 +8,11 @@ calib.launch:      to see the calib result of two lasers
 mapping:           use two laser sensors to build a dense map
 
 map_transformer:   transform the map according to the tfs, once
+
+odom_may:          odometry, send Vx, Vy, A
+
+laser_reg:		   registration part, send icp pose to loc part
+
+loc_demo:          ekf localization
+
+sender:	           listen tf, send the udf msg to vehicle
