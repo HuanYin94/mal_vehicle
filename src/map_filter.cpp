@@ -35,6 +35,7 @@ public:
 
     PM::DataPointsFilters mapFilters;
 
+    int intTh;
 };
 
 map_filter::~map_filter()
@@ -44,7 +45,8 @@ map_filter::map_filter(ros::NodeHandle& n):
     n(n),
     loadMapName(getParam<string>("loadMapName", ".")),
     saveMapName(getParam<string>("saveMapName", ".")),
-    filterYamlName(getParam<string>("filterYamlName", "."))
+    filterYamlName(getParam<string>("filterYamlName", ".")),
+    intTh(getParam<int>("intTh", 0))
 {
     DP mapCloud = DP::load(loadMapName);
 
@@ -58,8 +60,20 @@ map_filter::map_filter(ros::NodeHandle& n):
 
     /// intensity filter ?
 
+    DP mapCloud_new = mapCloud.createSimilarEmpty();
+    int cnt = 0;
+    int rowLine = mapCloud.getDescriptorStartingRow("intensity");
+    for(int i=0; i<mapCloud.features.cols(); i++)
+    {
+        if(mapCloud.descriptors(rowLine, i) > this->intTh)
+        {
+            mapCloud_new.setColFrom(cnt, mapCloud, i);
+            cnt++;
+        }
+    }
+    mapCloud_new.conservativeResize(cnt);
 
-    mapCloud.save(saveMapName);
+    mapCloud_new.save(saveMapName);
 }
 
 int main(int argc, char **argv)

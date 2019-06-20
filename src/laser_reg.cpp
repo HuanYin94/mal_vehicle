@@ -148,6 +148,8 @@ void laser_reg::gotCloud2(const sensor_msgs::PointCloud2& cloudMsgIn)
     conCloud = laserCloud2;
     conCloud.concatenate(laserCloud1);
 
+//    conCloud.save("/home/yh/oneScan.vtk");
+
     // filter the input cloud
     inputFilters.apply(conCloud);
 
