@@ -8,7 +8,7 @@
 - ObservationDirectionDataPointsFilter
 - OrientNormalsDataPointsFilter 
 - MaxDensityDataPointsFilter:
-    maxDensity: 50.0
+    maxDensity: 20.0
 - BoundingBoxDataPointsFilter:
     xMin: -2
     xMax: 2

@@ -1,3 +1,10 @@
+- SurfaceNormalDataPointsFilter:
+    knn: 5
+    epsilon: 0
+    keepNormals: 1
+    keepDensities: 1
+- ObservationDirectionDataPointsFilter
+- OrientNormalsDataPointsFilter 
 - OctreeGridDataPointsFilter:
     buildParallel: 1
     maxPointByNode: 1

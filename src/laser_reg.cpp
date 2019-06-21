@@ -72,6 +72,8 @@ public:
 
     geometry_msgs::Pose2D  PMTransform2Pose2D(PM::TransformationParameters RT);
 
+    float icp_xy_max, icp_yaw_max,icp_overlap_min;
+
 };
 
 laser_reg::~laser_reg()
@@ -82,7 +84,10 @@ laser_reg::laser_reg(ros::NodeHandle& n):
     loadMapName(getParam<string>("loadMapName", ".")),
     transformation(PM::get().REG(Transformation).create("RigidTransformation")),
     inputFilterYamlName(getParam<string>("inputFilterYamlName", ".")),
-    icpYamlName(getParam<string>("icpYamlName", "."))
+    icpYamlName(getParam<string>("icpYamlName", ".")),
+    icp_xy_max(getParam<float>("icp_xy_max", 0)),
+    icp_yaw_max(getParam<float>("icp_yaw_max", 0)),
+    icp_overlap_min(getParam<float>("icp_overlap_min", 0))
 {
 
     /// prepare, load yamls
@@ -208,11 +213,26 @@ void laser_reg::registration(DP cloudIn, const ros::Time& stamp)
 
         PM::TransformationParameters T_base2world_new = T_laser22world_new * T_laser22base.inverse();
 
-//        tf_broader_base2world.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(T_base2world_new, "world", "base_footprint", stamp));
+        /// judge the icp convergence-error
+        PM::TransformationParameters T_base2world_relative = T_base2world.inverse() * T_base2world_new;
+        geometry_msgs::Pose2D pose_relative = this->PMTransform2Pose2D(T_base2world_relative);
+
+        cout<<"ICP-Relative:  "<<pose_relative.x<<"    "
+           <<pose_relative.y<<"    "
+          <<pose_relative.theta<<endl;
+
+        // magic numbrer
+        if(icp.errorMinimizer->getOverlap()<icp_overlap_min || abs(pose_relative.x)>icp_xy_max || abs(pose_relative.y)>icp_xy_max || abs(pose_relative.theta)>icp_yaw_max)
+        {
+            cout<<"NO-SENT"<<endl;
+            return;
+        }
 
         ///no tf publish, send as an observation message to ekf-loc
         icp_pose_msg = this->PMTransform2Pose2D(T_base2world_new);
         posePublisher.publish(icp_pose_msg);
+        cout<<"SENT"<<endl;
+
     }
     catch (PM::ConvergenceError error)
     {

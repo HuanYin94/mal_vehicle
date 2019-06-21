@@ -4,9 +4,9 @@
 	<node pkg="mal_vehicle" type="recorder" name="recorder" output="screen" >
 		<param name ="/use_sim_time" value="true"/>
 		
-		<param name="saveMagPoseName" value="/home/yh/zhenhua_some/2019.06.20/mag_13-24-23.txt"/>
-		<param name="saveOdomPoseName" value="/home/yh/zhenhua_some/2019.06.20/odom_13-24-23.txt"/>
-		<param name="saveLocPoseName" value="/home/yh/zhenhua_some/2019.06.20/loc_13-24-23.txt"/>
+		<param name="saveMagPoseName" value="/home/yh/zhenhua_some/2019.06.20/mag_13-31-49.txt"/>
+		<param name="saveOdomPoseName" value="/home/yh/zhenhua_some/2019.06.20/odom_13-31-49.txt"/>
+		<param name="saveLocPoseName" value="/home/yh/zhenhua_some/2019.06.20/loc_13-31-49.txt"/>
 
 	</node>
 
