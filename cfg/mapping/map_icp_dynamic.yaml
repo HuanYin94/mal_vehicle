@@ -11,7 +11,7 @@ referenceDataPointsFilters:
 matcher:
   KDTreeMatcher:
     knn: 10
-    maxDist: 10.0
+    maxDist: 5.0
     epsilon: 0
 
 outlierFilters:
@@ -38,9 +38,9 @@ transformationCheckers:
       maxTranslationNorm: 30.00
 
 inspector:
-	VTKFileInspector
-#	NullInspector
+#	VTKFileInspector
+	NullInspector
 
 logger:
-	FileLogger
-#	NullLogger
+#	FileLogger
+	NullLogger

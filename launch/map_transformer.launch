@@ -10,9 +10,11 @@
 		<param name="yaw1" value="-0.7418"/>
 		
 		<!--first frame of mag message when mapping, from rosbag-->
-		<param name="x2" value="50.1408"/>
+		<param name="x2" value="50.001"/>
 		<param name="y2" value="11.9797"/>
 		<param name="yaw2" value="0.0011"/>
+
+		<!-- not first frame, the calib from whole trajectory>
 		
 		<param name="loadMapName" value="/home/yh/map_zhenhua__.vtk"/>
 		<param name="saveMapName" value="/home/yh/zhenhua_some/2019.06.20/map_zhenhua_in_mag_world.vtk"/>

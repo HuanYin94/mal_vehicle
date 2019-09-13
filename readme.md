@@ -7,7 +7,9 @@ calib.launch:      to see the calib result of two lasers
 
 mapping:           use two laser sensors to build a dense map
 
-map_transformer:   transform the map according to the tfs, once
+map_filter:
+
+map_transformer:   transform the map according to the tfs, once 
 
 odom_may:          odometry, send Vx, Vy, A
 
