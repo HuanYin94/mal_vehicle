@@ -74,6 +74,10 @@ public:
 
     float icp_xy_max, icp_yaw_max,icp_overlap_min;
 
+    int laserCnt_1, laserCnt_2;
+
+    int laser_cyc;
+
 };
 
 laser_reg::~laser_reg()
@@ -87,8 +91,11 @@ laser_reg::laser_reg(ros::NodeHandle& n):
     icpYamlName(getParam<string>("icpYamlName", ".")),
     icp_xy_max(getParam<float>("icp_xy_max", 0)),
     icp_yaw_max(getParam<float>("icp_yaw_max", 0)),
-    icp_overlap_min(getParam<float>("icp_overlap_min", 0))
+    icp_overlap_min(getParam<float>("icp_overlap_min", 0)),
+    laser_cyc(getParam<int>("laser_cyc", 0))
 {
+    laserCnt_1=0;
+    laserCnt_2=0;
 
     /// prepare, load yamls
     // set icp
@@ -127,6 +134,13 @@ laser_reg::laser_reg(ros::NodeHandle& n):
 
 void laser_reg::gotCloud1(const sensor_msgs::PointCloud2& cloudMsgIn)
 {
+    if((laserCnt_1%laser_cyc)!=0)
+    {
+        laserCnt_1++;
+        return;
+    }
+    laserCnt_1++;
+
     this->laserCloud1 = DP(PointMatcher_ros::rosMsgToPointMatcherCloud<float>(cloudMsgIn));
 
     this->T_laser12 = PointMatcher_ros::eigenMatrixToDim<float>(
@@ -147,6 +161,13 @@ void laser_reg::gotCloud2(const sensor_msgs::PointCloud2& cloudMsgIn)
     {
         return;
     }
+
+    if((laserCnt_2%laser_cyc)!=0)
+    {
+        laserCnt_2++;
+        return;
+    }
+    laserCnt_2++;
 
     this->laserCloud2 = DP(PointMatcher_ros::rosMsgToPointMatcherCloud<float>(cloudMsgIn));
 
@@ -209,6 +230,10 @@ void laser_reg::registration(DP cloudIn, const ros::Time& stamp)
         double t1 = ros::Time::now().toSec();
         cout<<"Time cost:   "<<t1-t0<<" seconds."<<endl;
 
+//        cout<<T_laser22world<<endl;
+//        cout<<""<<endl;
+//        cout<<T_laser22world_new<<endl;
+
         ROS_INFO_STREAM("icp over_lap:  " << icp.errorMinimizer->getOverlap());
 
         PM::TransformationParameters T_base2world_new = T_laser22world_new * T_laser22base.inverse();
@@ -230,6 +255,12 @@ void laser_reg::registration(DP cloudIn, const ros::Time& stamp)
 
         ///no tf publish, send as an observation message to ekf-loc
         icp_pose_msg = this->PMTransform2Pose2D(T_base2world_new);
+
+
+        // print out the result, debug
+        cout<<T_base2world(0,3)<<"    "<<T_base2world(1,3)<<endl;
+        cout<<icp_pose_msg.x<<"    "<<icp_pose_msg.y<<"    "<<icp_pose_msg.theta<<endl;
+
         posePublisher.publish(icp_pose_msg);
         cout<<"SENT"<<endl;
 

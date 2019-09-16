@@ -74,7 +74,7 @@ void odom::gotVelocityAngular(const geometry_msgs::Vector3Stamped& msgIn)
 {
 //    cout<<"I heard the wheel angs."<<endl;
     this->velocity_angular = msgIn;
-
+    cout<<msgIn.header.seq<<endl;
     // process&publish the odometry data
     this->process_pub_odom();
 }
@@ -159,6 +159,12 @@ void odom::process_pub_odom()
     odo_msg.twist.twist.linear.x = velocity_angular.vector.x;
     odo_msg.twist.twist.linear.y = velocity_angular.vector.y;
     odo_msg.twist.twist.angular.x = velocity_angular.vector.z;
+
+    /// set zero for test
+//    odo_msg.twist.twist.linear.x = 0;
+//    odo_msg.twist.twist.linear.y = 0;
+//    odo_msg.twist.twist.angular.x = 0;
+
 
     odo_msg.header.stamp = velocity_angular.header.stamp;
     odo_msg.header.seq = velocity_angular.header.seq;

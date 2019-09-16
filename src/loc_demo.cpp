@@ -19,11 +19,11 @@
 #include <fstream>
 #include <visualization_msgs/Marker.h>
 
-#define DELTA_TIME 0.02
-
 using namespace std;
 using namespace Eigen;
 using namespace PointMatcherSupport;
+
+#define ODOM_TIME 0.02
 
 class loc_demo
 {
@@ -69,6 +69,12 @@ public:
 
     bool init_flag;
 
+    bool process_flag;
+    int odomCnt;
+
+    int lastOdomSeq;
+    bool odomInitFlag;
+
 };
 
 loc_demo::~loc_demo()
@@ -80,15 +86,20 @@ loc_demo::loc_demo(ros::NodeHandle& n):
 {
     magCnt = 0; // count in initial
     veh_sta << 0,0,0;
-    noise_R = 0.1*Matrix3f::Identity();
-    noise_P = 0.01*Matrix3f::Identity();
+
+    noise_R = 1*Matrix3f::Identity();
+    noise_P = 0.1*Matrix3f::Identity();
     noise_Q = 0.001*Matrix3f::Identity();
     matrix_I = 1*Matrix3f::Identity();
 
     // jacob = identity for icp & mag
-    jacob_H = Matrix3f::Identity();
+    jacob_H = 1*Matrix3f::Identity();
 
     init_flag = false;
+
+    process_flag = false;
+    odomCnt = 0;
+    odomInitFlag = false;
 
     mag_pose_sub = n.subscribe("mag_pose", 1, &loc_demo::gotMag, this);
     icp_pose_sub = n.subscribe("icp_pose", 1, &loc_demo::gotIcp, this);
@@ -111,26 +122,31 @@ void loc_demo::gotMag(const geometry_msgs::PointStamped &magMsgIn)
     }
 
     cout<<"-------------------Mag-------------------"<<endl;
-
-    geometry_msgs::PointStamped mag_pose = magMsgIn;
+    cout<<"GT:  "<<magMsgIn.point.x<<"  "<<magMsgIn.point.y<<"  "<<magMsgIn.point.z<<endl;
 
     if(magCnt <= mag_init_int )
     {
-        cout<<">>>>IN"<<endl;
+        cout<<">>>>IN MAG"<<endl;
 
         Vector3f mag_pose( magMsgIn.point.x, magMsgIn.point.y, magMsgIn.point.z);
-        gain_K = jacob_H * conv * jacob_H.transpose() + noise_Q;
+
+        Matrix3f K_ = jacob_H * conv * jacob_H.transpose() + noise_Q;
+        gain_K = conv * jacob_H.transpose() * K_.inverse();
         veh_sta = veh_sta + gain_K * (mag_pose - jacob_H * veh_sta);
         conv = (matrix_I - gain_K*jacob_H) * conv;
 
+        cout<<"jacob_H: "<<jacob_H<<jacob_H.transpose()<<endl;
+        cout<<"K_in:    "<<K_.inverse()<<endl;
+        cout<<"gain:    "<<gain_K<<endl;
+        cout<<"mag:     "<<mag_pose.transpose()<<endl;
         cout<<"veh:     "<<veh_sta.transpose()<<endl;
+        cout<<"conv:    "<<conv<<endl;
 
         this->publishTF(veh_sta);
 
     }
 
     magCnt ++;
-
 }
 
 void loc_demo::gotIcp(const geometry_msgs::Pose2D &icpMsgIn)
@@ -142,16 +158,16 @@ void loc_demo::gotIcp(const geometry_msgs::Pose2D &icpMsgIn)
 
     Vector3f icp_pose( icpMsgIn.x, icpMsgIn.y, icpMsgIn.theta);
 
-    gain_K = jacob_H * conv * jacob_H.transpose() + noise_P;
-
+    Matrix3f K_ = jacob_H * conv * jacob_H.transpose() + noise_P;
+    gain_K = conv * jacob_H.transpose() * K_.inverse();
     veh_sta = veh_sta + gain_K * (icp_pose - jacob_H * veh_sta);
-
     conv = (matrix_I - gain_K*jacob_H) * conv;
 
     cout<<"veh:     "<<veh_sta.transpose()<<endl;
+    cout<<"Conv:    "<<conv<<endl;
+    cout<<"gainK:    "<<gain_K<<endl;
 
     this->publishTF(veh_sta);
-
 }
 
 void loc_demo::gotOdom(const nav_msgs::Odometry &odomMsgIn)
@@ -161,26 +177,47 @@ void loc_demo::gotOdom(const nav_msgs::Odometry &odomMsgIn)
     if(veh_sta(0) == 0)
         return;
 
+    /// get the time for calculation
+    int currentOdomSeq;
+    if(!odomInitFlag)
+    {
+        lastOdomSeq = odomMsgIn.header.seq;
+        currentOdomSeq = lastOdomSeq + 1;
+        odomInitFlag = true;
+    }
+    else
+    {
+        currentOdomSeq = odomMsgIn.header.seq;
+    }
+    double deltaTime = (currentOdomSeq - lastOdomSeq) * ODOM_TIME;
+
     float lastOrient = veh_sta(2);
 
-    veh_sta(0) = cos(veh_sta(2))*DELTA_TIME*odomMsgIn.twist.twist.linear.x - sin(veh_sta(2))*DELTA_TIME*odomMsgIn.twist.twist.linear.y + veh_sta(0);
-    veh_sta(1) = sin(veh_sta(2))*DELTA_TIME*odomMsgIn.twist.twist.linear.x + cos(veh_sta(2))*DELTA_TIME*odomMsgIn.twist.twist.linear.y + veh_sta(1);
-    veh_sta(2) = veh_sta(2) + odomMsgIn.twist.twist.angular.x*DELTA_TIME;
+//    cout<<"deltaTime:   "<<deltaTime<<endl;
+//    cout<<"BEFORE:  "<<veh_sta.transpose()<<endl;
 
-    jacob_F << 1, 0, -sin(lastOrient)*DELTA_TIME*odomMsgIn.twist.twist.linear.x - cos(lastOrient)*DELTA_TIME*odomMsgIn.twist.twist.linear.y,
-               0, 1, cos(lastOrient)*DELTA_TIME*odomMsgIn.twist.twist.linear.x - sin(lastOrient)*DELTA_TIME*odomMsgIn.twist.twist.linear.y,
+    veh_sta(0) = cos(veh_sta(2))*deltaTime*odomMsgIn.twist.twist.linear.x - sin(veh_sta(2))*deltaTime*odomMsgIn.twist.twist.linear.y + veh_sta(0);
+    veh_sta(1) = sin(veh_sta(2))*deltaTime*odomMsgIn.twist.twist.linear.x + cos(veh_sta(2))*deltaTime*odomMsgIn.twist.twist.linear.y + veh_sta(1);
+    veh_sta(2) = veh_sta(2) + odomMsgIn.twist.twist.angular.x*deltaTime;
+
+    jacob_F << 1, 0, -sin(lastOrient)*deltaTime*odomMsgIn.twist.twist.linear.x - cos(lastOrient)*deltaTime*odomMsgIn.twist.twist.linear.y,
+               0, 1, cos(lastOrient)*deltaTime*odomMsgIn.twist.twist.linear.x - sin(lastOrient)*deltaTime*odomMsgIn.twist.twist.linear.y,
                0, 0, 1;
 
     conv = jacob_F*conv*jacob_F.transpose() + this->noise_R;
 
-    cout<<"veh:     "<<veh_sta.transpose()<<endl;
+//    cout<<"AFTER:     "<<veh_sta.transpose()<<endl;
+//    cout<<"Conv:    "<<conv<<endl;
 
     this->publishTF(veh_sta);
+
+    lastOdomSeq = currentOdomSeq;
 
 }
 
 void loc_demo::publishTF(Vector3f pose)
 {
+    cout<<"PUBLISH IN TF-TREE"<<endl;
     PM::TransformationParameters T_base2world = this->Pose2DToRT3D(pose);
     tf_broader_base2world.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(T_base2world, "world", "base_footprint", ros::Time::now()));
 }
