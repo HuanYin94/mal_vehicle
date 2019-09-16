@@ -1,17 +1,17 @@
 readingDataPointsFilters:
   - RandomSamplingDataPointsFilter:
-      prob: 0.3
+      prob: 1.0
 
 referenceDataPointsFilters:
 #  - MaxDistDataPointsFilter:
 #      maxDist: 20.0
   - RandomSamplingDataPointsFilter:
-      prob: 0.5
+      prob: 1.0
 
 matcher:
   KDTreeMatcher:
-    knn: 3
-    maxDist: 5.0
+    knn: 10
+    maxDist: 3.0
     epsilon: 0
 
 outlierFilters:
@@ -24,7 +24,7 @@ outlierFilters:
  #    descName: probabilityStatic
 
 errorMinimizer:
-  PointToPlaneErrorMinimizer
+  PointToPointErrorMinimizer
 
 transformationCheckers:
   - DifferentialTransformationChecker:

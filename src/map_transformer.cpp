@@ -85,6 +85,7 @@ map_transformer::map_transformer(ros::NodeHandle& n):
 
     mapCloud_new_new.save(saveMapName);
 
+    cout<<"Transform Finished"<<endl;
 }
 
 int main(int argc, char **argv)

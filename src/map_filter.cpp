@@ -63,20 +63,23 @@ map_filter::map_filter(ros::NodeHandle& n):
 
     /// intensity filter
 
-    DP mapCloud_new = mapCloud_bck.createSimilarEmpty();
+    DP mapCloud_int = mapCloud_bck.createSimilarEmpty();
     int cnt = 0;
-    int rowLine = mapCloud.getDescriptorStartingRow("intensity");
-    for(int i=0; i<mapCloud.features.cols(); i++)
+    int rowLine = mapCloud_bck.getDescriptorStartingRow("intensity");
+    for(int i=0; i<mapCloud_bck.features.cols(); i++)
     {
-        if(mapCloud.descriptors(rowLine, i) > this->intTh)
+        if(mapCloud_bck.descriptors(rowLine, i) > this->intTh)
         {
-            mapCloud_new.setColFrom(cnt, mapCloud, i);
+            mapCloud_int.setColFrom(cnt, mapCloud_bck, i);
             cnt++;
         }
     }
-    mapCloud_new.conservativeResize(cnt);
+    mapCloud_int.conservativeResize(cnt);
 
-    mapCloud_new.save(saveMapName);
+    /// combine and save
+    mapCloud.concatenate(mapCloud_int);
+
+    mapCloud.save(saveMapName);
 
     cout<<"Filtering Finished"<<endl;
 }

@@ -3,7 +3,7 @@
 
 	<node pkg="mal_vehicle" type="laser_reg" name="laser_reg" output="screen" >
 		
-		<param name="loadMapName" value="/home/yh/zhenhua_some/2019.06.20/map_zhenhua_in_mag_world_octree.vtk"/>
+		<param name="loadMapName" value="/home/yh/zhenhua_some/2019.09.13/map_filtered_transformed.vtk"/>
 		<param name="inputFilterYamlName" value="$(find mal_vehicle)/cfg/loc_input_filters.yaml"/>
 		<param name="icpYamlName" value="$(find mal_vehicle)/cfg/loc_icp.yaml"/>
 		

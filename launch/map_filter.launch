@@ -8,7 +8,7 @@
 		<param name="loadMapName" value="/home/yh/zhenhua_some/2019.09.13/map_origin.vtk"/>
 		<param name="saveMapName" value="/home/yh/zhenhua_some/2019.09.13/map_filtered.vtk"/>
 		
-		<param name="intTh" value="0"/>
+		<param name="intTh" value="150"/>
 	</node>
 
 </launch>
