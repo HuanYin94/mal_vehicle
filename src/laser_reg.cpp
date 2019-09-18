@@ -42,7 +42,7 @@ public:
     DP mapCloud;
     string loadMapName;
 
-    DP laserCloud1, laserCloud2, conCloud;
+    DP laserCloud1, laserCloud2;
     unique_ptr<PM::Transformation> transformation;
 
     tf::TransformListener tf_listener_calib_lasers;
@@ -74,9 +74,13 @@ public:
 
     float icp_xy_max, icp_yaw_max,icp_overlap_min;
 
-    int laserCnt_1, laserCnt_2;
+    int laserCnt_1;
 
     int laser_cyc;
+
+    ros::Publisher conLaserPublisher;
+
+    bool processFlag;
 
 };
 
@@ -95,7 +99,7 @@ laser_reg::laser_reg(ros::NodeHandle& n):
     laser_cyc(getParam<int>("laser_cyc", 0))
 {
     laserCnt_1=0;
-    laserCnt_2=0;
+    processFlag = false;
 
     /// prepare, load yamls
     // set icp
@@ -127,6 +131,9 @@ laser_reg::laser_reg(ros::NodeHandle& n):
 
     posePublisher = n.advertise<geometry_msgs::Pose2D>( "icp_pose", 1 );
 
+    // publish the con-cloud
+    conLaserPublisher = n.advertise<sensor_msgs::PointCloud2>( "con_laser", 1);
+
     cloud_sub1 = n.subscribe("/velodyne1/velodyne_points", 1, &laser_reg::gotCloud1, this);
     cloud_sub2 = n.subscribe("/velodyne2/velodyne_points", 1, &laser_reg::gotCloud2, this);
 
@@ -136,12 +143,17 @@ void laser_reg::gotCloud1(const sensor_msgs::PointCloud2& cloudMsgIn)
 {
     if((laserCnt_1%laser_cyc)!=0)
     {
-        laserCnt_1++;
+        laserCnt_1++; processFlag = false;
         return;
     }
-    laserCnt_1++;
+    laserCnt_1++; processFlag = true;
+    cout<<"L_CNT_1: "<<laserCnt_1<<endl;
 
     this->laserCloud1 = DP(PointMatcher_ros::rosMsgToPointMatcherCloud<float>(cloudMsgIn));
+
+
+
+    double t_wait_0 = ros::Time::now().toSec();
 
     this->T_laser12 = PointMatcher_ros::eigenMatrixToDim<float>(
                PointMatcher_ros::transformListenerToEigenMatrix<float>(
@@ -151,36 +163,51 @@ void laser_reg::gotCloud1(const sensor_msgs::PointCloud2& cloudMsgIn)
                ros::Time::now()
            ), laserCloud1.getHomogeneousDim());
 
+    double t_wait_1 = ros::Time::now().toSec();
+    cout<<"Wait_trans time cost:   "<<t_wait_1-t_wait_0<<" seconds."<<endl;
+
+
+    double t_trans_0 = ros::Time::now().toSec();
     laserCloud1 = transformation->compute(laserCloud1, this->T_laser12.inverse());
+    double t_trans_1 = ros::Time::now().toSec();
+    cout<<"Laser1_trans time cost:   "<<t_trans_1-t_trans_0<<" seconds."<<endl;
 
 }
 
 void laser_reg::gotCloud2(const sensor_msgs::PointCloud2& cloudMsgIn)
 {
-    if(laserCloud1.features.cols() == 0)
+    if(laserCloud1.features.cols() == 0 || !processFlag)
     {
         return;
     }
-
-    if((laserCnt_2%laser_cyc)!=0)
-    {
-        laserCnt_2++;
-        return;
-    }
-    laserCnt_2++;
 
     this->laserCloud2 = DP(PointMatcher_ros::rosMsgToPointMatcherCloud<float>(cloudMsgIn));
 
-    conCloud = laserCloud2;
-    conCloud.concatenate(laserCloud1);
+    DP conCloud = laserCloud2;
 
-//    conCloud.save("/home/yh/oneScan.vtk");
+    // print out the time
+//    cout<<laserCloud1<<endl;
+
+    // concatenate
+    double t_con_0 = ros::Time::now().toSec();
+    conCloud.concatenate(laserCloud1);
+    double t_con_1 = ros::Time::now().toSec();
+    cout<<"Concatenate time cost:   "<<t_con_1-t_con_0<<" seconds."<<endl;
 
     // filter the input cloud
+    double t_filter_0 = ros::Time::now().toSec();
     inputFilters.apply(conCloud);
+    double t_filter_1 = ros::Time::now().toSec();
+    cout<<"Filtering time cost:   "<<t_filter_1-t_filter_0<<" seconds."<<endl;
+
+
+    // publish the con-cloud
+    conLaserPublisher.publish(PointMatcher_ros::pointMatcherCloudToRosMsg<float>(conCloud, "laser2", ros::Time::now()));
 
     ///do icp
+    cout<<"ICP stamp:   "<<cloudMsgIn.header.stamp<<endl;
     this->registration(conCloud, cloudMsgIn.header.stamp);
+
 }
 
 void laser_reg::registration(DP cloudIn, const ros::Time& stamp)
@@ -207,6 +234,8 @@ void laser_reg::registration(DP cloudIn, const ros::Time& stamp)
                 ros::Time(0)
            ), cloudIn.features.rows());
 
+    cout<<ros::Time::now()<<endl;
+
     this->T_base2world = PointMatcher_ros::eigenMatrixToDim<float>(
                PointMatcher_ros::transformListenerToEigenMatrix<float>(
                this->tf_listener_base2world,
@@ -228,7 +257,7 @@ void laser_reg::registration(DP cloudIn, const ros::Time& stamp)
         double t0 = ros::Time::now().toSec();
         PM::TransformationParameters T_laser22world_new = icp(cloudIn, T_laser22world);
         double t1 = ros::Time::now().toSec();
-        cout<<"Time cost:   "<<t1-t0<<" seconds."<<endl;
+        cout<<"Registration time cost:   "<<t1-t0<<" seconds."<<endl;
 
 //        cout<<T_laser22world<<endl;
 //        cout<<""<<endl;

@@ -10,8 +10,8 @@ referenceDataPointsFilters:
 
 matcher:
   KDTreeMatcher:
-    knn: 10
-    maxDist: 5.0
+    knn: 5
+    maxDist: 1.0
     epsilon: 0
 
 outlierFilters:
@@ -24,7 +24,7 @@ outlierFilters:
  #    descName: probabilityStatic
 
 errorMinimizer:
-  PointToPointErrorMinimizer
+  PointToPlaneErrorMinimizer
 
 transformationCheckers:
   - DifferentialTransformationChecker:
@@ -38,8 +38,8 @@ transformationCheckers:
       maxTranslationNorm: 20.00
 
 inspector:
-	VTKFileInspector
-#	NullInspector
+#	VTKFileInspector
+	NullInspector
 
 logger:
 #	FileLogger

@@ -5,7 +5,7 @@
     yMax: inf
     zMin: -2.0
     zMax: 0.0
-    removeInside: 0
+    removeInside: 1
 - SurfaceNormalDataPointsFilter:
     knn: 5
     epsilon: 0

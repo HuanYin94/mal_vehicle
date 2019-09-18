@@ -135,13 +135,6 @@ void loc_demo::gotMag(const geometry_msgs::PointStamped &magMsgIn)
         veh_sta = veh_sta + gain_K * (mag_pose - jacob_H * veh_sta);
         conv = (matrix_I - gain_K*jacob_H) * conv;
 
-        cout<<"jacob_H: "<<jacob_H<<jacob_H.transpose()<<endl;
-        cout<<"K_in:    "<<K_.inverse()<<endl;
-        cout<<"gain:    "<<gain_K<<endl;
-        cout<<"mag:     "<<mag_pose.transpose()<<endl;
-        cout<<"veh:     "<<veh_sta.transpose()<<endl;
-        cout<<"conv:    "<<conv<<endl;
-
         this->publishTF(veh_sta);
 
     }
@@ -158,16 +151,18 @@ void loc_demo::gotIcp(const geometry_msgs::Pose2D &icpMsgIn)
 
     Vector3f icp_pose( icpMsgIn.x, icpMsgIn.y, icpMsgIn.theta);
 
-    Matrix3f K_ = jacob_H * conv * jacob_H.transpose() + noise_P;
-    gain_K = conv * jacob_H.transpose() * K_.inverse();
-    veh_sta = veh_sta + gain_K * (icp_pose - jacob_H * veh_sta);
-    conv = (matrix_I - gain_K*jacob_H) * conv;
+    cout<<icp_pose.transpose()<<endl;
 
-    cout<<"veh:     "<<veh_sta.transpose()<<endl;
-    cout<<"Conv:    "<<conv<<endl;
-    cout<<"gainK:    "<<gain_K<<endl;
+//    Matrix3f K_ = jacob_H * conv * jacob_H.transpose() + noise_P;
+//    gain_K = conv * jacob_H.transpose() * K_.inverse();
+//    veh_sta = veh_sta + gain_K * (icp_pose - jacob_H * veh_sta);
+//    conv = (matrix_I - gain_K*jacob_H) * conv;
 
-    this->publishTF(veh_sta);
+//    cout<<"veh:     "<<veh_sta.transpose()<<endl;
+//    cout<<"Conv:    "<<conv<<endl;
+//    cout<<"gainK:    "<<gain_K<<endl;
+
+//    this->publishTF(veh_sta);
 }
 
 void loc_demo::gotOdom(const nav_msgs::Odometry &odomMsgIn)
@@ -212,12 +207,12 @@ void loc_demo::gotOdom(const nav_msgs::Odometry &odomMsgIn)
     this->publishTF(veh_sta);
 
     lastOdomSeq = currentOdomSeq;
-
 }
 
 void loc_demo::publishTF(Vector3f pose)
 {
-    cout<<"PUBLISH IN TF-TREE"<<endl;
+    cout<<"Current Time:    "<<ros::Time::now()<<endl;
+    cout<<"PUBLISH IN TF-TREE:  "<<pose.transpose()<<endl;
     PM::TransformationParameters T_base2world = this->Pose2DToRT3D(pose);
     tf_broader_base2world.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(T_base2world, "world", "base_footprint", ros::Time::now()));
 }
