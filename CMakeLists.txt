@@ -66,7 +66,6 @@ target_link_libraries(recorder
 ${catkin_LIBRARIES}
 )
 
-
 add_executable(loc_fusion src/loc_fusion.cpp)
 target_link_libraries(loc_fusion
 ${catkin_LIBRARIES}

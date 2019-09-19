@@ -61,7 +61,7 @@ public:
     Matrix3f gain_K;
     Matrix3f matrix_I;
 
-    void publishTF(Vector3f pose);
+    void finalPublish(Vector3f pose, const ros::Time& stamp);
 
     PM::TransformationParameters Pose2DToRT3D(Vector3f input);
 
@@ -109,17 +109,13 @@ public:
 
     Vector3f PMTransform2Pose2D(PM::TransformationParameters RT);
 
-    float icp_xy_max, icp_yaw_max,icp_overlap_min;
+    float icp_xy_max, icp_yaw_max, icp_overlap_min;
 
-    int laserCnt_1;
-
-    int laser_cyc;
-
-    ros::Publisher conLaserPublisher;
+    int laserCnt_1, laser_cyc;
 
     bool processFlag;
 
-
+    ros::Publisher poseMsgPublisher;
 };
 
 loc_fusion::~loc_fusion()
@@ -169,17 +165,16 @@ loc_fusion::loc_fusion(ros::NodeHandle& n):
         inputFilters = PM::DataPointsFilters(ifs);
     }
 
-    conLaserPublisher = n.advertise<sensor_msgs::PointCloud2>( "con_laser", 1);
-
-
+    // pose msg publisher
+    poseMsgPublisher = n.advertise<geometry_msgs::PointStamped>( "ekf_pose", 1);
 
 
     magCnt = 0; // count in initial
     veh_sta << 0,0,0;
 
-    noise_R = 1*Matrix3f::Identity();
-    noise_P = 0.1*Matrix3f::Identity();
-    noise_Q = 0.001*Matrix3f::Identity();
+    noise_R = 0.1*Matrix3f::Identity();  noise_R(3,3) = 1.0; // motion noise
+    noise_P = 0.1*Matrix3f::Identity();// laser noise
+    noise_Q = 0.01*Matrix3f::Identity();  // mag noise
     matrix_I = 1*Matrix3f::Identity();
 
     // jacob = identity for icp & mag
@@ -226,7 +221,7 @@ void loc_fusion::gotMag(const geometry_msgs::PointStamped &magMsgIn)
         veh_sta = veh_sta + gain_K * (mag_pose - jacob_H * veh_sta);
         conv = (matrix_I - gain_K*jacob_H) * conv;
 
-        this->publishTF(veh_sta);
+        this->finalPublish(veh_sta, magMsgIn.header.stamp);
 
     }
 
@@ -272,7 +267,7 @@ void loc_fusion::gotOdom(const nav_msgs::Odometry &odomMsgIn)
 //    cout<<"AFTER:     "<<veh_sta.transpose()<<endl;
 //    cout<<"Conv:    "<<conv<<endl;
 
-    this->publishTF(veh_sta);
+    this->finalPublish(veh_sta, odomMsgIn.header.stamp);
 
     lastOdomSeq = currentOdomSeq;
 }
@@ -324,9 +319,6 @@ void loc_fusion::gotLaser2(const sensor_msgs::PointCloud2& cloudMsgIn)
 
     // filter the input cloud
     inputFilters.apply(conCloud);
-
-    // publish the con-cloud
-    conLaserPublisher.publish(PointMatcher_ros::pointMatcherCloudToRosMsg<float>(conCloud, "laser2", ros::Time::now()));
 
     ///do icp
     this->registration(conCloud, cloudMsgIn.header.stamp);
@@ -405,7 +397,7 @@ void loc_fusion::registration(DP cloudIn, const ros::Time& stamp)
         ///no tf publish, send as an observation message to ekf-loc
         Vector3f icp_pose = this->PMTransform2Pose2D(T_base2world_new);
 
-        ///EKF
+        ///EKF part, can be //
 
         Matrix3f K_ = jacob_H * conv * jacob_H.transpose() + noise_P;
         gain_K = conv * jacob_H.transpose() * K_.inverse();
@@ -416,7 +408,9 @@ void loc_fusion::registration(DP cloudIn, const ros::Time& stamp)
         cout<<"Conv:    "<<conv<<endl;
         cout<<"gainK:    "<<gain_K<<endl;
 
-        this->publishTF(veh_sta);
+        this->finalPublish(veh_sta, stamp);
+
+        /// up
 
     }
     catch (PM::ConvergenceError error)
@@ -435,12 +429,23 @@ Vector3f loc_fusion::PMTransform2Pose2D(PM::TransformationParameters RT)
 }
 
 
-void loc_fusion::publishTF(Vector3f pose)
+void loc_fusion::finalPublish(Vector3f pose, const ros::Time& stamp)
 {
+    // print out
     cout<<"Current Time:    "<<ros::Time::now()<<endl;
     cout<<"PUBLISH IN TF-TREE:  "<<pose.transpose()<<endl;
+
+    // publish in tf
     PM::TransformationParameters T_base2world = this->Pose2DToRT3D(pose);
     tf_broader_base2world.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(T_base2world, "world", "base_footprint", ros::Time::now()));
+
+    // publish a certain ros message, for recording
+    geometry_msgs::PointStamped ekf_pose;
+    ekf_pose.header.stamp = stamp;
+    ekf_pose.point.x = pose(0);
+    ekf_pose.point.y = pose(1);
+    ekf_pose.point.z = pose(2);
+    poseMsgPublisher.publish(ekf_pose);
 }
 
 loc_fusion::PM::TransformationParameters loc_fusion::Pose2DToRT3D(Vector3f input)

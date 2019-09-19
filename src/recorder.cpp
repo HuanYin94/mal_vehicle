@@ -33,11 +33,12 @@ public:
 
 
     string saveMagPoseName, saveOdomPoseName, saveLocPoseName;
-    ros::Subscriber mag_pose_sub, odom_sub;
+    ros::Subscriber mag_pose_sub, odom_sub, ekf_pose_sub;
     tf::TransformListener tfListener;
 
     void gotMag(const geometry_msgs::PointStamped &magMsgIn);
     void gotOdom(const nav_msgs::Odometry &odomMsgIn);
+    void gotEKFpose(const geometry_msgs::PointStamped &poseMsgIn);
 
     ofstream magPoseStream;
     ofstream odomPoseStream;
@@ -64,6 +65,7 @@ recorder::recorder(ros::NodeHandle& n):
 
     mag_pose_sub = n.subscribe("mag_pose", 1, &recorder::gotMag, this);
     odom_sub = n.subscribe("wheel_odom", 1, &recorder::gotOdom, this);
+    ekf_pose_sub = n.subscribe("ekf_pose", 1, &recorder::gotEKFpose, this);
 
 }
 
@@ -71,45 +73,28 @@ void recorder::gotMag(const geometry_msgs::PointStamped &magMsgIn)
 {
 
     /// mag pose
-//    magPoseStream.open(saveMagPoseName, ios::out|ios::ate|ios::app);
-//    magPoseStream << magMsgIn.point.x << "   "
-//                     << magMsgIn.point.y << "   "
-//                        << magMsgIn.point.z <<endl;
-//    magPoseStream.close();
+    magPoseStream.open(saveMagPoseName, ios::out|ios::ate|ios::app);
+    magPoseStream << magMsgIn.header.stamp << "   "
+                   << magMsgIn.point.x << "   "
+                     << magMsgIn.point.y << "   "
+                        << magMsgIn.point.z <<endl;
+    magPoseStream.close();
 
-    Vector3f mag_measured;
-    mag_measured << magMsgIn.point.x,
-                    magMsgIn.point.y,
-                    this->angleNorm(magMsgIn.point.z);
+//    Vector3f mag_measured;
+    //    mag_measured << magMsgIn.point.x,
+    //                    magMsgIn.point.y,
+    //                    this->angleNorm(magMsgIn.point.z);
 
-    PM::TransformationParameters T_mag = this->Pose2DToRT3D(mag_measured);
+    //    PM::TransformationParameters T_mag = this->Pose2DToRT3D(mag_measured);
 
-    locPoseStream.open(saveMagPoseName, ios::out|ios::ate|ios::app);
-    locPoseStream << std::fixed << magMsgIn.header.stamp.toSec() << endl;
-    locPoseStream << T_mag(0,0) << "    " << T_mag(0,1) << "    " << T_mag(0,2) << "    " << T_mag(0,3) << endl;
-    locPoseStream << T_mag(1,0) << "    " << T_mag(1,1) << "    " << T_mag(1,2) << "    " << T_mag(1,3) << endl;
-    locPoseStream << T_mag(2,0) << "    " << T_mag(2,1) << "    " << T_mag(2,2) << "    " << T_mag(2,3) << endl;
-    locPoseStream << T_mag(3,0) << "    " << T_mag(3,1) << "    " << T_mag(3,2) << "    " << T_mag(3,3) << endl;
-    locPoseStream.close();
+    //    locPoseStream.open(saveMagPoseName, ios::out|ios::ate|ios::app);
+    //    locPoseStream << std::fixed << magMsgIn.header.stamp.toSec() << endl;
+    //    locPoseStream << T_mag(0,0) << "    " << T_mag(0,1) << "    " << T_mag(0,2) << "    " << T_mag(0,3) << endl;
+    //    locPoseStream << T_mag(1,0) << "    " << T_mag(1,1) << "    " << T_mag(1,2) << "    " << T_mag(1,3) << endl;
+    //    locPoseStream << T_mag(2,0) << "    " << T_mag(2,1) << "    " << T_mag(2,2) << "    " << T_mag(2,3) << endl;
+    //    locPoseStream << T_mag(3,0) << "    " << T_mag(3,1) << "    " << T_mag(3,2) << "    " << T_mag(3,3) << endl;
+    //    locPoseStream.close();
 
-
-
-    /// estimated pose ?
-//    T_base2world = PointMatcher_ros::eigenMatrixToDim<float>(
-//                PointMatcher_ros::transformListenerToEigenMatrix<float>(
-//                tfListener,
-//                "world",
-//                "base_footprint",
-//                ros::Time::now()
-//            ), 4);
-
-//    Vector3f pose = this->RT3D2Pose2D(T_base2world);
-
-//    locPoseStream.open(saveLocPoseName, ios::out|ios::ate|ios::app);
-//    locPoseStream << pose(0) << "   "
-//                     << pose(1) << "   "
-//                        << pose(2) << endl;
-//    locPoseStream.close();
 
 }
 
@@ -121,11 +106,24 @@ void recorder::gotOdom(const nav_msgs::Odometry &odomMsgIn)
     Vector3f As = V.axis();
 
     odomPoseStream.open(saveOdomPoseName, ios::out|ios::ate|ios::app);
-    odomPoseStream << odomMsgIn.pose.pose.position.x << "   "
+    odomPoseStream << odomMsgIn.header.stamp << "   "
+                    << odomMsgIn.pose.pose.position.x << "   "
                       << odomMsgIn.pose.pose.position.y << "   "
                          << As(2) <<endl;
     odomPoseStream.close();
 }
+
+void recorder::gotEKFpose(const geometry_msgs::PointStamped &poseMsgIn)
+{
+    /// estimated pose
+    locPoseStream.open(saveLocPoseName, ios::out|ios::ate|ios::app);
+    locPoseStream << poseMsgIn.header.stamp << "   "
+                   << poseMsgIn.point.x << "   "
+                     << poseMsgIn.point.y << "   "
+                        << poseMsgIn.point.z <<endl;
+    locPoseStream.close();
+}
+
 
 Vector3f recorder::RT3D2Pose2D(PM::TransformationParameters RT)
 {

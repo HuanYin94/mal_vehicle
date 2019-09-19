@@ -21,7 +21,7 @@
 		
 		<param name="mag_init_int" value="10"/>
 
-		<param name="loadMapName" value="/home/yh/zhenhua_some/2019.09.13/map_test_transformed.vtk"/>
+		<param name="loadMapName" value="/home/yh/zhenhua_some/2019.09.13/map_filtered_transformed.vtk"/>
 		<param name="inputFilterYamlName" value="$(find mal_vehicle)/cfg/loc_input_filters.yaml"/>
 		<param name="icpYamlName" value="$(find mal_vehicle)/cfg/loc_icp.yaml"/>
 		
@@ -29,7 +29,7 @@
 		<param name="icp_yaw_max" value="0.1"/>
 		<param name="icp_overlap_min" value="0.3"/>
 
-		<param name="laser_cyc" value="20"/>
+		<param name="laser_cyc" value="10"/>
 
 	</node>
 

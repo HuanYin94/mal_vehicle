@@ -8,9 +8,9 @@
 		<param name="saveOdomPoseName" value="/home/yh/zhenhua_some/2019.06.20/odom_13-31-49.txt"/>
 		<param name="saveLocPoseName" value="/home/yh/zhenhua_some/2019.06.20/loc_13-31-49.txt"/-->
 
-		<param name="saveMagPoseName" value="/home/yh/zhenhua_some/2019.09.12/mag_pose_straight.txt"/>
-		<param name="saveOdomPoseName" value="/home/yh/zhenhua_some/2019.09.12/odom_.txt"/>
-		<param name="saveLocPoseName" value="/home/yh/zhenhua_some/2019.09.12/loc_.txt"/>
+		<param name="saveMagPoseName" value="/home/yh/zhenhua_some/2019.09.19/mag_1324.txt"/>
+		<param name="saveOdomPoseName" value="/home/yh/zhenhua_some/2019.09.19/odom_1324.txt"/>
+		<param name="saveLocPoseName" value="/home/yh/zhenhua_some/2019.09.19/loc_1324.txt"/>
 
 	</node>
 
