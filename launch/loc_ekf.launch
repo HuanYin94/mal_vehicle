@@ -17,9 +17,11 @@
     <node pkg="tf" type="static_transform_publisher" name="link2_broadcaster" args="7.5012 1.4813 0.962 0 0 -0.3625 0.9320 base_footprint laser2 50" />
 
 
-	<node pkg="mal_vehicle" type="loc_demo" name="loc_demo" output="screen" >
+
+
+	<node pkg="mal_vehicle" type="loc_ekf" name="loc_ekf" output="screen" >
 		
-		<param name="mag_init_int" value="99999999"/>
+		<param name="mag_init_int" value="10"/>
 
 	</node>
 

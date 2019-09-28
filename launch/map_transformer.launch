@@ -15,8 +15,8 @@
 		<param name="yaw2" value="0.01"/>
 
 		
-		<param name="loadMapName" value="/home/yh/zhenhua_some/2019.09.13/map_filtered.vtk"/>
-		<param name="saveMapName" value="/home/yh/zhenhua_some/2019.09.13/map_filtered_transformed.vtk"/>
+		<param name="loadMapName" value="/home/yh/zhenhua_some/2019.09.13/map_intensity.vtk"/>
+		<param name="saveMapName" value="/home/yh/zhenhua_some/2019.09.13/map_intensity_transformed.vtk"/>
 
 	</node>
 

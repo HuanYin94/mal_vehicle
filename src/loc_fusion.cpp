@@ -207,8 +207,8 @@ void loc_fusion::gotMag(const geometry_msgs::PointStamped &magMsgIn)
         return;
     }
 
-    cout<<"-------------------Mag-------------------"<<endl;
-    cout<<"GT:  "<<magMsgIn.point.x<<"  "<<magMsgIn.point.y<<"  "<<magMsgIn.point.z<<endl;
+//    cout<<"-------------------Mag-------------------"<<endl;
+//    cout<<"GT:  "<<magMsgIn.point.x<<"  "<<magMsgIn.point.y<<"  "<<magMsgIn.point.z<<endl;
 
     if(magCnt <= mag_init_int )
     {
@@ -264,7 +264,8 @@ void loc_fusion::gotOdom(const nav_msgs::Odometry &odomMsgIn)
 
     conv = jacob_F*conv*jacob_F.transpose() + this->noise_R;
 
-//    cout<<"AFTER:     "<<veh_sta.transpose()<<endl;
+//    cout<<"AFTER:     "<<veh_sta.transpose()<<endl;N T
+
 //    cout<<"Conv:    "<<conv<<endl;
 
     this->finalPublish(veh_sta, odomMsgIn.header.stamp);
@@ -307,6 +308,8 @@ void loc_fusion::gotLaser2(const sensor_msgs::PointCloud2& cloudMsgIn)
 
     cout<<"-------------------laser2-------------------"<<endl;
 
+    double t0 = ros::Time::now().toSec();
+
     this->laserCloud2 = DP(PointMatcher_ros::rosMsgToPointMatcherCloud<float>(cloudMsgIn));
 
     DP conCloud = laserCloud2;
@@ -323,6 +326,8 @@ void loc_fusion::gotLaser2(const sensor_msgs::PointCloud2& cloudMsgIn)
     ///do icp
     this->registration(conCloud, cloudMsgIn.header.stamp);
 
+    double t1 = ros::Time::now().toSec();
+    cout<<"ICP total time cost:   "<<t1-t0<<" seconds."<<endl;
 }
 
 void loc_fusion::registration(DP cloudIn, const ros::Time& stamp)
@@ -368,10 +373,10 @@ void loc_fusion::registration(DP cloudIn, const ros::Time& stamp)
 
     try
     {
-        double t0 = ros::Time::now().toSec();
+//        double t0 = ros::Time::now().toSec();
         PM::TransformationParameters T_laser22world_new = icp(cloudIn, T_laser22world);
-        double t1 = ros::Time::now().toSec();
-        cout<<"Registration time cost:   "<<t1-t0<<" seconds."<<endl;
+//        double t1 = ros::Time::now().toSec();
+//        cout<<"Registration time cost:   "<<t1-t0<<" seconds."<<endl;
 
 //        cout<<T_laser22world<<endl;
 //        cout<<""<<endl;

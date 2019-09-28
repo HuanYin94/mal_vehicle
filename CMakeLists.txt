@@ -41,16 +41,6 @@ ${catkin_LIBRARIES}
 ${libpointmatcher_LIBRARIES}
 )
 
-add_executable(loc_demo src/loc_demo.cpp)
-target_link_libraries(loc_demo
-${catkin_LIBRARIES}
-)
-
-add_executable(laser_reg src/laser_reg.cpp)
-target_link_libraries(laser_reg
-${catkin_LIBRARIES}
-)
-
 add_executable(odom_may src/odom_may.cpp)
 target_link_libraries(odom_may
 ${catkin_LIBRARIES}
@@ -70,6 +60,19 @@ add_executable(loc_fusion src/loc_fusion.cpp)
 target_link_libraries(loc_fusion
 ${catkin_LIBRARIES}
 )
+
+add_executable(loc_ekf src/loc_ekf.cpp)
+target_link_libraries(loc_ekf
+${catkin_LIBRARIES}
+)
+
+add_executable(loc_reg src/loc_reg.cpp)
+target_link_libraries(loc_reg
+${catkin_LIBRARIES}
+)
+
+
+
 
 
 

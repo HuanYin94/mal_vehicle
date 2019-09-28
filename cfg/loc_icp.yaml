@@ -10,13 +10,13 @@ referenceDataPointsFilters:
 
 matcher:
   KDTreeMatcher:
-    knn: 10
+    knn: 3
     maxDist: 3.0
     epsilon: 0
 
 outlierFilters:
   - TrimmedDistOutlierFilter:
-     ratio: 0.58
+     ratio: 0.75
   - SurfaceNormalOutlierFilter:
      maxAngle: 1.57
  # - GenericDescriptorOutlierFilter:

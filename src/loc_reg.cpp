@@ -18,11 +18,13 @@
 
 #include <fstream>
 
+#include "std_msgs/Int8.h"
+
 using namespace std;
 using namespace Eigen;
 using namespace PointMatcherSupport;
 
-class laser_reg
+class loc_reg
 {
 
     typedef PointMatcher<float> PM;
@@ -30,8 +32,8 @@ class laser_reg
     typedef PM::Matches Matches;
 
 public:
-    laser_reg(ros::NodeHandle &n);
-    ~laser_reg();
+    loc_reg(ros::NodeHandle &n);
+    ~loc_reg();
     ros::NodeHandle& n;
 
     ros::Subscriber cloud_sub1, cloud_sub2;
@@ -82,12 +84,16 @@ public:
 
     bool processFlag;
 
+    ros::Publisher receiveLaserPublisher;
+    std_msgs::Int8 receivedLaser;
+
+
 };
 
-laser_reg::~laser_reg()
+loc_reg::~loc_reg()
 {}
 
-laser_reg::laser_reg(ros::NodeHandle& n):
+loc_reg::loc_reg(ros::NodeHandle& n):
     n(n),
     loadMapName(getParam<string>("loadMapName", ".")),
     transformation(PM::get().REG(Transformation).create("RigidTransformation")),
@@ -100,6 +106,7 @@ laser_reg::laser_reg(ros::NodeHandle& n):
 {
     laserCnt_1=0;
     processFlag = false;
+    receivedLaser.data = 0;
 
     /// prepare, load yamls
     // set icp
@@ -134,12 +141,14 @@ laser_reg::laser_reg(ros::NodeHandle& n):
     // publish the con-cloud
     conLaserPublisher = n.advertise<sensor_msgs::PointCloud2>( "con_laser", 1);
 
-    cloud_sub1 = n.subscribe("/velodyne1/velodyne_points", 1, &laser_reg::gotCloud1, this);
-    cloud_sub2 = n.subscribe("/velodyne2/velodyne_points", 1, &laser_reg::gotCloud2, this);
+    receiveLaserPublisher = n.advertise<std_msgs::Int8>("receive_laser", 1);
+
+    cloud_sub1 = n.subscribe("/velodyne1/velodyne_points", 1, &loc_reg::gotCloud1, this);
+    cloud_sub2 = n.subscribe("/velodyne2/velodyne_points", 1, &loc_reg::gotCloud2, this);
 
 }
 
-void laser_reg::gotCloud1(const sensor_msgs::PointCloud2& cloudMsgIn)
+void loc_reg::gotCloud1(const sensor_msgs::PointCloud2& cloudMsgIn)
 {
     if((laserCnt_1%laser_cyc)!=0)
     {
@@ -150,8 +159,6 @@ void laser_reg::gotCloud1(const sensor_msgs::PointCloud2& cloudMsgIn)
     cout<<"L_CNT_1: "<<laserCnt_1<<endl;
 
     this->laserCloud1 = DP(PointMatcher_ros::rosMsgToPointMatcherCloud<float>(cloudMsgIn));
-
-
 
     double t_wait_0 = ros::Time::now().toSec();
 
@@ -174,19 +181,20 @@ void laser_reg::gotCloud1(const sensor_msgs::PointCloud2& cloudMsgIn)
 
 }
 
-void laser_reg::gotCloud2(const sensor_msgs::PointCloud2& cloudMsgIn)
+void loc_reg::gotCloud2(const sensor_msgs::PointCloud2& cloudMsgIn)
 {
     if(laserCloud1.features.cols() == 0 || !processFlag)
     {
         return;
     }
 
+    // send the received signal to ekf node
+    receivedLaser.data ++;
+    receiveLaserPublisher.publish(receivedLaser);
+
     this->laserCloud2 = DP(PointMatcher_ros::rosMsgToPointMatcherCloud<float>(cloudMsgIn));
 
     DP conCloud = laserCloud2;
-
-    // print out the time
-//    cout<<laserCloud1<<endl;
 
     // concatenate
     double t_con_0 = ros::Time::now().toSec();
@@ -200,7 +208,6 @@ void laser_reg::gotCloud2(const sensor_msgs::PointCloud2& cloudMsgIn)
     double t_filter_1 = ros::Time::now().toSec();
     cout<<"Filtering time cost:   "<<t_filter_1-t_filter_0<<" seconds."<<endl;
 
-
     // publish the con-cloud
     conLaserPublisher.publish(PointMatcher_ros::pointMatcherCloudToRosMsg<float>(conCloud, "laser2", ros::Time::now()));
 
@@ -210,7 +217,7 @@ void laser_reg::gotCloud2(const sensor_msgs::PointCloud2& cloudMsgIn)
 
 }
 
-void laser_reg::registration(DP cloudIn, const ros::Time& stamp)
+void loc_reg::registration(DP cloudIn, const ros::Time& stamp)
 {
 
     cout<<"-------------------!!!!-------------------"<<endl;
@@ -285,7 +292,6 @@ void laser_reg::registration(DP cloudIn, const ros::Time& stamp)
         ///no tf publish, send as an observation message to ekf-loc
         icp_pose_msg = this->PMTransform2Pose2D(T_base2world_new);
 
-
         // print out the result, debug
         cout<<T_base2world(0,3)<<"    "<<T_base2world(1,3)<<endl;
         cout<<icp_pose_msg.x<<"    "<<icp_pose_msg.y<<"    "<<icp_pose_msg.theta<<endl;
@@ -302,7 +308,7 @@ void laser_reg::registration(DP cloudIn, const ros::Time& stamp)
 
 }
 
-geometry_msgs::Pose2D laser_reg::PMTransform2Pose2D(PM::TransformationParameters RT)
+geometry_msgs::Pose2D loc_reg::PMTransform2Pose2D(PM::TransformationParameters RT)
 {
     geometry_msgs::Pose2D p;
     p.x = RT(0,3); p.y = RT(1,3); p.theta = std::atan2(RT(1,0), RT(0,0));
@@ -313,10 +319,10 @@ int main(int argc, char **argv)
 {
 
     // INIT
-    ros::init(argc, argv, "laser_reg");
+    ros::init(argc, argv, "loc_reg");
     ros::NodeHandle n;
 
-    laser_reg laser_reg_(n);
+    loc_reg loc_reg_(n);
 
     ros::MultiThreadedSpinner spinner(1);
     spinner.spin();
