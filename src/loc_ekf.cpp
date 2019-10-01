@@ -70,7 +70,7 @@ public:
     MatrixXf matrix_I;
     MatrixXf matrix_A;
 
-    void finalPublish(VectorXf pose);
+    void finalPublish(VectorXf pose, const ros::Time& stamp);
 
     PM::TransformationParameters Pose2DToPM3D(Vector3f pose);
     Matrix3f Pose2DToRT3D(Vector3f pose);
@@ -83,6 +83,8 @@ public:
     int lastOdomSeq;
     bool odomInitFlag;
     int conLaserCnt;
+
+    ros::Publisher poseMsgPublisher;
 };
 
 loc_ekf::~loc_ekf()
@@ -99,7 +101,7 @@ loc_ekf::loc_ekf(ros::NodeHandle& n):
     veh_sta << 0,0,0,0,0,0;
 
     noise_R = 1*MatrixXf::Identity(6,6); noise_R.bottomLeftCorner(3,3).setZero();
-    noise_P = 0.1*MatrixXf::Identity(3,3); noise_P(2,2) = 0.01;
+    noise_P = 1*MatrixXf::Identity(3,3); noise_P(2,2) = 0.01;
     matrix_I = 1*MatrixXf::Identity(6,6);
     gain_K = MatrixXf::Zero(6,3);
     matrix_A = 0*MatrixXf::Identity(6,3);
@@ -112,6 +114,9 @@ loc_ekf::loc_ekf(ros::NodeHandle& n):
 
     odomCnt = 0;
     odomInitFlag = false;
+
+    // pose msg publisher
+    poseMsgPublisher = n.advertise<geometry_msgs::PointStamped>( "ekf_pose", 1);
 
     mag_pose_sub = n.subscribe("mag_pose", 1, &loc_ekf::gotMag, this);
     icp_pose_sub = n.subscribe("icp_pose", 1, &loc_ekf::gotIcp, this);
@@ -153,7 +158,7 @@ void loc_ekf::gotMag(const geometry_msgs::PointStamped &magMsgIn)
 
         conv = 0*MatrixXf::Identity(6,6);
 
-        this->finalPublish(veh_sta);
+        this->finalPublish(veh_sta, magMsgIn.header.stamp);
 
     }
 
@@ -200,7 +205,11 @@ void loc_ekf::gotOdom(const nav_msgs::Odometry &odomMsgIn)
 
     conv = jacob_F*conv*jacob_F.transpose() + this->noise_R;
 
-    this->finalPublish(veh_sta);
+//    cout<<jacob_F<<endl;
+//    cout<<""<<endl;
+//    cout<<conv<<endl;
+
+    this->finalPublish(veh_sta, odomMsgIn.header.stamp);
 
     lastOdomSeq = currentOdomSeq;
 }
@@ -222,6 +231,7 @@ void loc_ekf::gotLaserIn(const std_msgs::Int8 &receiveLaserCnt)
 
         cout<<conv<<endl;
 
+        cout<<veh_sta<<endl;
     }
 }
 
@@ -230,14 +240,26 @@ void loc_ekf::gotIcp(const geometry_msgs::Pose2D &icpMsgIn)
     cout<<"-------------------ICP-------------------"<<endl;
     cout<<"Time:    "<<ros::Time::now()<<endl;
 
+    /*
     // laser measure
     Vector3f lastPoseV(icpMsgIn.x, icpMsgIn.y, icpMsgIn.theta);
     Matrix3f lastPoseM = this->Pose2DToRT3D(lastPoseV);
+
+    cout<<"Past Laser Measure:  "<<lastPoseV.transpose()<<endl;
 
     Matrix3f currPoseM = this->Pose2DToRT3D(veh_sta.head(3));
 
     Matrix3f measureM = lastPoseM.inverse() * currPoseM;
     Vector3f measureV = this->RT3DToPose2D(measureM);
+
+
+    // Check
+    double velocityICP = pow(pow(measureV(0),2) + pow(measureV(1),2), 0.5) / (receiveICPTime-augment_time);
+    cout<<pow(pow(measureV(0),2) + pow(measureV(1),2), 0.5)<<endl;
+    cout<<(receiveICPTime-augment_time)<<endl;
+    cout<<"ICP Velocity:    "<<velocityICP<<endl;
+    if(velocityICP < (expected_velocity/2))
+        return;
 
 
     // self states
@@ -275,16 +297,58 @@ void loc_ekf::gotIcp(const geometry_msgs::Pose2D &icpMsgIn)
     cout<<conv<<endl;
     cout<<"Gain K:  " <<endl;
     cout<<gain_K<<endl;
+    cout<<"delta M"<<endl;
+    cout<<measureV.transpose()<<endl;
+    cout<<"delta Z"<<endl;
+    cout<<zV.transpose()<<endl;
 
     this->finalPublish(veh_sta);
+    */
+
+    Vector3f measureV(icpMsgIn.x, icpMsgIn.y, icpMsgIn.theta);
+    Matrix3f H1 = 0*MatrixXf::Zero(3,3);
+    Matrix3f H2 = MatrixXf::Identity(3,3);
+    jacob_H << H1, H2;
+
+    Matrix3f S = jacob_H * conv * jacob_H.transpose() + noise_P;
+    gain_K = conv * jacob_H.transpose() * S.inverse();
+
+    MatrixXf matrix_B = MatrixXf::Zero(3,6); matrix_B << H1, H2;
+    Vector3f zV = matrix_B * veh_sta;
+
+    // ++
+    veh_sta = veh_sta + gain_K * (measureV - zV);
+
+    conv = (matrix_I - gain_K*jacob_H) * conv;
+
+    this->finalPublish(veh_sta, ros::Time::now());
+
+    cout<<"Conv:    "<<endl;
+    cout<<conv<<endl;
+    cout<<"Gain K:  " <<endl;
+    cout<<gain_K<<endl;
+    cout<<"delta M"<<endl;
+    cout<<measureV.transpose()<<endl;
+    cout<<"delta Z"<<endl;
+    cout<<zV.transpose()<<endl;
+
 }
 
-void loc_ekf::finalPublish(VectorXf pose)
+void loc_ekf::finalPublish(VectorXf pose, const ros::Time& stamp)
 {
     cout<<"Current Time:    "<<ros::Time::now()<<endl;
     cout<<"VEH_STA:  "<<pose.transpose()<<endl;
+
     PM::TransformationParameters T_base2world = this->Pose2DToPM3D(pose.head(3));
     tf_broader_base2world.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(T_base2world, "world", "base_footprint", ros::Time::now()));
+
+    // publish a certain ros message, for recording
+    geometry_msgs::PointStamped ekf_pose;
+    ekf_pose.header.stamp = stamp;
+    ekf_pose.point.x = pose(0);
+    ekf_pose.point.y = pose(1);
+    ekf_pose.point.z = pose(2);
+    poseMsgPublisher.publish(ekf_pose);
 }
 
 loc_ekf::PM::TransformationParameters loc_ekf::Pose2DToPM3D(Vector3f pose)

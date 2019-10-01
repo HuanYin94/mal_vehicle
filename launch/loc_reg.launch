@@ -7,11 +7,12 @@
 		<param name="inputFilterYamlName" value="$(find mal_vehicle)/cfg/loc_input_filters.yaml"/>
 		<param name="icpYamlName" value="$(find mal_vehicle)/cfg/loc_icp.yaml"/>
 		
-		<param name="icp_xy_max" value="1.0"/>
+		<param name="icp_xy_max" value="5.0"/>
 		<param name="icp_yaw_max" value="0.1"/>
 		<param name="icp_overlap_min" value="0.3"/>
 
 		<param name="laser_cyc" value="10"/>	
+
 	</node>
 
 </launch>

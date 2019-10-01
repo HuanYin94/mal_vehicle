@@ -207,8 +207,8 @@ void loc_fusion::gotMag(const geometry_msgs::PointStamped &magMsgIn)
         return;
     }
 
-//    cout<<"-------------------Mag-------------------"<<endl;
-//    cout<<"GT:  "<<magMsgIn.point.x<<"  "<<magMsgIn.point.y<<"  "<<magMsgIn.point.z<<endl;
+    cout<<"-------------------Mag-------------------"<<endl;
+    cout<<"GT:  "<<magMsgIn.point.x<<"  "<<magMsgIn.point.y<<"  "<<magMsgIn.point.z<<endl;
 
     if(magCnt <= mag_init_int )
     {
