@@ -208,7 +208,7 @@ void loc_reg::gotCloud2(const sensor_msgs::PointCloud2& cloudMsgIn)
                this->tf_listener_base2world,
                "world",
                "base_footprint",
-               ros::Time::now()
+               ros::Time(0)
            ), laserCloud1.features.rows());
 
     T_laser22world = T_base2world * T_laser22base;

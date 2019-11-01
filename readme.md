@@ -16,13 +16,12 @@ sender_udp:	       listen tf, send the udf msg to vehicle
 
 recorder:		   record poses for comparison
 
-# old, not work well
+# 2019.09.19, length(state_vector) = 3
+
+loc_fusion:		   ekf_localization in one thread, combininig the laser registraiton inside 
+
+# length(state_vector) = 6
 
 laser_reg:		   registration part, send icp pose to loc part
 
 loc_demo:          ekf localization
-
-# 2019.09.19, 
-
-loc_fusion:		   ekf_localization in one thread, combininig the laser registraiton inside 
-

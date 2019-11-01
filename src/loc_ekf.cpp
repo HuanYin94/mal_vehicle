@@ -100,8 +100,10 @@ loc_ekf::loc_ekf(ros::NodeHandle& n):
     veh_sta.conservativeResize(6);
     veh_sta << 0,0,0,0,0,0;
 
-    noise_R = 1*MatrixXf::Identity(6,6); noise_R.bottomLeftCorner(3,3).setZero();
-    noise_P = 1*MatrixXf::Identity(3,3); noise_P(2,2) = 0.01;
+    noise_R = 0.1*MatrixXf::Identity(6,6); noise_R.bottomLeftCorner(3,6).setZero(); noise_R(2,2) = 1.0;
+    cout<<noise_R<<endl;
+    noise_P = 0.11*MatrixXf::Identity(3,3); noise_P(2,2) = 0.01;
+
     matrix_I = 1*MatrixXf::Identity(6,6);
     gain_K = MatrixXf::Zero(6,3);
     matrix_A = 0*MatrixXf::Identity(6,3);

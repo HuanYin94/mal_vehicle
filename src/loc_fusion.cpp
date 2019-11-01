@@ -172,7 +172,7 @@ loc_fusion::loc_fusion(ros::NodeHandle& n):
     magCnt = 0; // count in initial
     veh_sta << 0,0,0;
 
-    noise_R = 0.1*Matrix3f::Identity();  noise_R(3,3) = 1.0; // motion noise
+    noise_R = 0.1*Matrix3f::Identity();  noise_R(2,2) = 1.0; // motion noise
     noise_P = 0.1*Matrix3f::Identity();// laser noise
     noise_Q = 0.01*Matrix3f::Identity();  // mag noise
     matrix_I = 1*Matrix3f::Identity();
