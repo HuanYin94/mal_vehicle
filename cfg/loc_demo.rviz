@@ -41,23 +41,23 @@ Visualization Manager:
   Class: ""
   Displays:
     - Alpha: 0.5
-      Cell Size: 10
+      Cell Size: 0.1
       Class: rviz/Grid
       Color: 160; 160; 164
-      Enabled: true
+      Enabled: false
       Line Style:
         Line Width: 0.03
         Value: Lines
       Name: Grid
       Normal Cell Count: 0
       Offset:
-        X: 0
-        Y: 0
+        X: 50
+        Y: 10
         Z: 0
       Plane: XY
-      Plane Cell Count: 100
+      Plane Cell Count: 1000
       Reference Frame: <Fixed Frame>
-      Value: true
+      Value: false
     - Class: rviz/TF
       Enabled: true
       Frame Timeout: 15
@@ -223,7 +223,7 @@ Visualization Manager:
       Position Transformer: XYZ
       Queue Size: 1
       Selectable: true
-      Size (Pixels): 1
+      Size (Pixels): 2
       Size (m): 0.1
       Style: Points
       Topic: /map
@@ -295,22 +295,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 80.8571
+      Distance: 35.7493
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 65.2227
-        Y: 30.1275
-        Z: -12.6927
+        X: 61.3465
+        Y: 3.22828
+        Z: -12.1991
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.939796
+      Pitch: 1.2648
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.9204
+      Yaw: 3.2304
     Saved: ~
 Window Geometry:
   Displays:
@@ -328,5 +328,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1498
-  X: 225
-  Y: 276
+  X: 195
+  Y: 246

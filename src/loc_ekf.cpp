@@ -102,7 +102,7 @@ loc_ekf::loc_ekf(ros::NodeHandle& n):
 
     noise_R = 0.1*MatrixXf::Identity(6,6); noise_R.bottomLeftCorner(3,6).setZero(); noise_R(2,2) = 1.0;
     cout<<noise_R<<endl;
-    noise_P = 0.11*MatrixXf::Identity(3,3); noise_P(2,2) = 0.01;
+    noise_P = 0.05*MatrixXf::Identity(3,3); noise_P(2,2) = 0.01;
 
     matrix_I = 1*MatrixXf::Identity(6,6);
     gain_K = MatrixXf::Zero(6,3);
@@ -231,9 +231,9 @@ void loc_ekf::gotLaserIn(const std_msgs::Int8 &receiveLaserCnt)
         veh_sta = matrix_A * veh_sta.head(3);
         conv = matrix_A * conv.topLeftCorner(3,3) * matrix_A.transpose();
 
-        cout<<conv<<endl;
+//        cout<<conv<<endl;
 
-        cout<<veh_sta<<endl;
+        cout<<veh_sta.transpose()<<endl;
     }
 }
 
@@ -241,71 +241,6 @@ void loc_ekf::gotIcp(const geometry_msgs::Pose2D &icpMsgIn)
 {
     cout<<"-------------------ICP-------------------"<<endl;
     cout<<"Time:    "<<ros::Time::now()<<endl;
-
-    /*
-    // laser measure
-    Vector3f lastPoseV(icpMsgIn.x, icpMsgIn.y, icpMsgIn.theta);
-    Matrix3f lastPoseM = this->Pose2DToRT3D(lastPoseV);
-
-    cout<<"Past Laser Measure:  "<<lastPoseV.transpose()<<endl;
-
-    Matrix3f currPoseM = this->Pose2DToRT3D(veh_sta.head(3));
-
-    Matrix3f measureM = lastPoseM.inverse() * currPoseM;
-    Vector3f measureV = this->RT3DToPose2D(measureM);
-
-
-    // Check
-    double velocityICP = pow(pow(measureV(0),2) + pow(measureV(1),2), 0.5) / (receiveICPTime-augment_time);
-    cout<<pow(pow(measureV(0),2) + pow(measureV(1),2), 0.5)<<endl;
-    cout<<(receiveICPTime-augment_time)<<endl;
-    cout<<"ICP Velocity:    "<<velocityICP<<endl;
-    if(velocityICP < (expected_velocity/2))
-        return;
-
-
-    // self states
-    Matrix3f lastPoseStaM = this->Pose2DToRT3D(veh_sta.tail(3));
-
-    Matrix3f zM = lastPoseStaM.inverse() * currPoseM;
-    Vector3f zV = this->RT3DToPose2D(zM);
-
-    Matrix2f temp1;
-    temp1 << -lastPoseStaM(1,0), lastPoseStaM(0,0),
-            -lastPoseStaM(0,0), lastPoseStaM(1,0);
-
-    Vector2f temp2(currPoseM(0,2)-lastPoseStaM(0,2), currPoseM(1,2)-lastPoseStaM(1,2));
-    Vector2f temp3 = temp1 * temp2;
-
-    Matrix3f H1 = 0*MatrixXf::Zero(3,3);  H1(2,2) = 1;
-    H1.topLeftCorner(2,2) = lastPoseStaM.block(0,0,2,2).transpose();
-
-    Matrix3f H2 = 0*MatrixXf::Zero(3,3);  H2(2,2) = -1;
-    H2.topLeftCorner(2,2) = -1*lastPoseStaM.block(0,0,2,2).transpose();
-    H2.topRightCorner(2,1) = temp3;
-
-    jacob_H << H1, H2;
-
-    Matrix3f S = jacob_H * conv * jacob_H.transpose() + noise_P;
-    gain_K = conv * jacob_H.transpose() * S.inverse();
-
-    // ++
-    veh_sta = veh_sta + gain_K * (measureV - zV);
-
-    conv = (matrix_I - gain_K*jacob_H) * conv;
-
-
-    cout<<"Conv:    "<<endl;
-    cout<<conv<<endl;
-    cout<<"Gain K:  " <<endl;
-    cout<<gain_K<<endl;
-    cout<<"delta M"<<endl;
-    cout<<measureV.transpose()<<endl;
-    cout<<"delta Z"<<endl;
-    cout<<zV.transpose()<<endl;
-
-    this->finalPublish(veh_sta);
-    */
 
     Vector3f measureV(icpMsgIn.x, icpMsgIn.y, icpMsgIn.theta);
     Matrix3f H1 = 0*MatrixXf::Zero(3,3);
@@ -325,10 +260,10 @@ void loc_ekf::gotIcp(const geometry_msgs::Pose2D &icpMsgIn)
 
     this->finalPublish(veh_sta, ros::Time::now());
 
-    cout<<"Conv:    "<<endl;
-    cout<<conv<<endl;
-    cout<<"Gain K:  " <<endl;
-    cout<<gain_K<<endl;
+//    cout<<"Conv:    "<<endl;
+//    cout<<conv<<endl;
+//    cout<<"Gain K:  " <<endl;
+//    cout<<gain_K<<endl;
     cout<<"delta M"<<endl;
     cout<<measureV.transpose()<<endl;
     cout<<"delta Z"<<endl;

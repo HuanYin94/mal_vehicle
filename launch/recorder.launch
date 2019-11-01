@@ -7,10 +7,10 @@
 		<!--param name="saveMagPoseName" value="/home/yh/zhenhua_some/2019.06.20/mag_13-31-49.txt"/>
 		<param name="saveOdomPoseName" value="/home/yh/zhenhua_some/2019.06.20/odom_13-31-49.txt"/>
 		<param name="saveLocPoseName" value="/home/yh/zhenhua_some/2019.06.20/loc_13-31-49.txt"/-->
-
-		<param name="saveMagPoseName" value="/home/yh/zhenhua_some/2019.10.01/mag_1324.txt"/>
-		<param name="saveOdomPoseName" value="/home/yh/zhenhua_some/2019.10.01/odom_1324.txt"/>
-		<param name="saveLocPoseName" value="/home/yh/zhenhua_some/2019.10.01/loc_1324.txt"/>
+s
+		<param name="saveMagPoseName" value="/home/yh/zhenhua_some/2019.11.02/mag_1331.txt"/>
+		<param name="saveLocPoseName" value="/home/yh/zhenhua_some/2019.11.02/loc_1331.txt"/>
+		<param name="saveOdomPoseName" value="/home/yh/zhenhua_some/2019.11.02/odom_1331.txt"/>
 
 	</node>
 

@@ -1,3 +1,8 @@
+% clear;clc;
+% close all;
+% load('loc_1324.txt');
+% load('mag_1324.txt');
+% load('odom_1324.txt');
 % 
 % mag_time = mag_1324(:,1);
 % loc_time = loc_1324(:,1);
@@ -21,7 +26,8 @@
 % xlabel('Pose N');
 % ylabel('XY Error (m)');
 % 
-% mean(error_xy)
+% disp('Trans-Error')
+% disp(mean(error_xy));
 % 
 % figure;
 % plot(error_yaw);
@@ -29,17 +35,19 @@
 % xlabel('Pose N');
 % ylabel('Yaw Error (deg)');
 % 
-% mean(error_yaw)
+% disp('Rot-Error')
+% disp(mean(error_yaw))
 
 
 
 
 
 
-
-
-
-
+clear;clc;
+close all;
+load('loc_1331.txt');
+load('mag_1331.txt');
+load('odom_1331.txt');
 
 mag_time = mag_1331(:,1);
 loc_time = loc_1331(:,1);
@@ -60,7 +68,8 @@ grid on;
 xlabel('Pose N');
 ylabel('XY Error (m)');
 
-mean(error_xy)
+disp('Trans-Error')
+disp(mean(error_xy));
 
 figure;
 plot(error_yaw);
@@ -68,5 +77,6 @@ grid on;
 xlabel('Pose N');
 ylabel('Yaw Error (deg)');
 
-mean(error_yaw)
+disp('Rot-Error')
+disp(mean(error_yaw))
 

@@ -62,6 +62,10 @@ recorder::recorder(ros::NodeHandle& n):
     saveOdomPoseName(getParam<string>("saveOdomPoseName", ".")),
     saveLocPoseName(getParam<string>("saveLocPoseName", "."))
 {
+    // delete the existing files
+    std::remove(saveMagPoseName.c_str());
+    std::remove(saveOdomPoseName.c_str());
+    std::remove(saveLocPoseName.c_str());
 
     mag_pose_sub = n.subscribe("mag_pose", 1, &recorder::gotMag, this);
     odom_sub = n.subscribe("wheel_odom", 1, &recorder::gotOdom, this);
