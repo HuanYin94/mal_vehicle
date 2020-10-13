@@ -132,14 +132,20 @@ int main(int argc, char **argv)
     ros::Rate rate(20.0);
     while(n.ok())
     {
-        T_base2world = PointMatcher_ros::eigenMatrixToDim<float>(
-                   PointMatcher_ros::transformListenerToEigenMatrix<float>(
-                   listener,
-                   "world",
-                   "base_footprint",
-                   ros::Time::now()
-               ), 4);
-
+        try
+        {
+            T_base2world = PointMatcher_ros::eigenMatrixToDim<float>(
+                       PointMatcher_ros::transformListenerToEigenMatrix<float>(
+                       listener,
+                       "world",
+                       "base_footprint",
+                       ros::Time(0)
+                   ), 4);
+        }
+        catch(tf::TransformException ex)
+        {
+            ROS_ERROR("transfrom exception : %s",ex.what());
+        }
         senderCallback(T_base2world);
 
         rate.sleep();

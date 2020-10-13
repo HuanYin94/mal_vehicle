@@ -197,9 +197,13 @@ void loc_fusion::gotMag(const geometry_msgs::PointStamped &magMsgIn)
 {
     if(!init_flag)
     {
-        veh_sta(0) = magMsgIn.point.x;
-        veh_sta(1) = magMsgIn.point.y;
-        veh_sta(2) = magMsgIn.point.z;
+//        veh_sta(0) = magMsgIn.point.x;
+//        veh_sta(1) = magMsgIn.point.y;
+//        veh_sta(2) = magMsgIn.point.z;
+
+        veh_sta(0) = 40;
+        veh_sta(1) = 11;
+        veh_sta(2) = 0;
 
         conv = 0*Matrix3f::Identity();
 
@@ -293,7 +297,7 @@ void loc_fusion::gotLaser1(const sensor_msgs::PointCloud2& cloudMsgIn)
                this->tf_listener_calib_lasers,
                "laser1",
                "laser2",
-               ros::Time::now()
+               ros::Time(0)
            ), laserCloud1.getHomogeneousDim());
 
     laserCloud1 = transformation->compute(laserCloud1, this->T_laser12.inverse());
@@ -308,7 +312,7 @@ void loc_fusion::gotLaser2(const sensor_msgs::PointCloud2& cloudMsgIn)
 
     cout<<"-------------------laser2-------------------"<<endl;
 
-    double t0 = ros::Time::now().toSec();
+    double t0 = ros::Time(0).toSec();
 
     this->laserCloud2 = DP(PointMatcher_ros::rosMsgToPointMatcherCloud<float>(cloudMsgIn));
 
@@ -326,7 +330,7 @@ void loc_fusion::gotLaser2(const sensor_msgs::PointCloud2& cloudMsgIn)
     ///do icp
     this->registration(conCloud, cloudMsgIn.header.stamp);
 
-    double t1 = ros::Time::now().toSec();
+    double t1 = ros::Time(0).toSec();
     cout<<"ICP total time cost:   "<<t1-t0<<" seconds."<<endl;
 }
 
@@ -336,7 +340,7 @@ void loc_fusion::registration(DP cloudIn, const ros::Time& stamp)
 
     // publish map
     if(mapPubCnt%10 == 0)
-        mapPublisher.publish(PointMatcher_ros::pointMatcherCloudToRosMsg<float>(mapCloud, "world", ros::Time::now()));
+        mapPublisher.publish(PointMatcher_ros::pointMatcherCloudToRosMsg<float>(mapCloud, "world", ros::Time(0)));
     mapPubCnt++;
 
     /// if do icp registration ?
@@ -352,8 +356,6 @@ void loc_fusion::registration(DP cloudIn, const ros::Time& stamp)
                "laser2",
                 ros::Time(0)
            ), cloudIn.features.rows());
-
-    cout<<ros::Time::now()<<endl;
 
     this->T_base2world = PointMatcher_ros::eigenMatrixToDim<float>(
                PointMatcher_ros::transformListenerToEigenMatrix<float>(
@@ -433,16 +435,15 @@ Vector3f loc_fusion::PMTransform2Pose2D(PM::TransformationParameters RT)
     return p;
 }
 
-
 void loc_fusion::finalPublish(Vector3f pose, const ros::Time& stamp)
 {
     // print out
-    cout<<"Current Time:    "<<ros::Time::now()<<endl;
+    cout<<"Current Time:    "<<ros::Time(0)<<endl;
     cout<<"PUBLISH IN TF-TREE:  "<<pose.transpose()<<endl;
 
     // publish in tf
     PM::TransformationParameters T_base2world = this->Pose2DToRT3D(pose);
-    tf_broader_base2world.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(T_base2world, "world", "base_footprint", ros::Time::now()));
+    tf_broader_base2world.sendTransform(PointMatcher_ros::eigenMatrixToStampedTransform<float>(T_base2world, "world", "base_footprint", ros::Time(0)));
 
     // publish a certain ros message, for recording
     geometry_msgs::PointStamped ekf_pose;
