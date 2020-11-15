@@ -116,6 +116,9 @@ public:
     bool processFlag;
 
     ros::Publisher poseMsgPublisher;
+
+    bool if_init;
+    float init_x,init_y,init_yaw;
 };
 
 loc_fusion::~loc_fusion()
@@ -131,7 +134,11 @@ loc_fusion::loc_fusion(ros::NodeHandle& n):
     icp_xy_max(getParam<float>("icp_xy_max", 0)),
     icp_yaw_max(getParam<float>("icp_yaw_max", 0)),
     icp_overlap_min(getParam<float>("icp_overlap_min", 0)),
-    laser_cyc(getParam<int>("laser_cyc", 0))
+    laser_cyc(getParam<int>("laser_cyc", 0)),
+    if_init(getParam<bool>("if_init", true)),
+    init_x(getParam<float>("init_x", 0)),
+    init_y(getParam<float>("init_y", 0)),
+    init_yaw(getParam<float>("init_yaw", 0))
 {
     /// ICP_reg init
     laserCnt_1=0;
@@ -168,9 +175,17 @@ loc_fusion::loc_fusion(ros::NodeHandle& n):
     // pose msg publisher
     poseMsgPublisher = n.advertise<geometry_msgs::PointStamped>( "ekf_pose", 1);
 
-
     magCnt = 0; // count in initial
-    veh_sta << 0,0,0;
+    if(if_init)
+    {
+        veh_sta << init_x, init_y, init_yaw;
+        conv = 0*Matrix3f::Identity();
+        this->finalPublish(veh_sta, ros::Time(0));
+    }
+    else
+    {
+        veh_sta << 0,0,0;
+    }
 
     noise_R = 0.1*Matrix3f::Identity();  noise_R(2,2) = 1.0; // motion noise
     noise_P = 0.1*Matrix3f::Identity();// laser noise
@@ -186,7 +201,7 @@ loc_fusion::loc_fusion(ros::NodeHandle& n):
     odomCnt = 0;
     odomInitFlag = false;
 
-    mag_pose_sub = n.subscribe("mag_pose", 1, &loc_fusion::gotMag, this);
+    // mag_pose_sub = n.subscribe("mag_pose", 1, &loc_fusion::gotMag, this);
     laser1_sub = n.subscribe("/velodyne1/velodyne_points", 1, &loc_fusion::gotLaser1, this);
     laser2_sub = n.subscribe("/velodyne2/velodyne_points", 1, &loc_fusion::gotLaser2, this);
     odom_sub = n.subscribe("wheel_odom", 1, &loc_fusion::gotOdom, this);
@@ -197,13 +212,13 @@ void loc_fusion::gotMag(const geometry_msgs::PointStamped &magMsgIn)
 {
     if(!init_flag)
     {
-//        veh_sta(0) = magMsgIn.point.x;
-//        veh_sta(1) = magMsgIn.point.y;
-//        veh_sta(2) = magMsgIn.point.z;
+       veh_sta(0) = magMsgIn.point.x;
+       veh_sta(1) = magMsgIn.point.y;
+       veh_sta(2) = magMsgIn.point.z;
 
-        veh_sta(0) = 40;
-        veh_sta(1) = 11;
-        veh_sta(2) = 0;
+        // veh_sta(0) = 40;
+        // veh_sta(1) = 11;
+        // veh_sta(2) = 0;
 
         conv = 0*Matrix3f::Identity();
 
@@ -403,6 +418,8 @@ void loc_fusion::registration(DP cloudIn, const ros::Time& stamp)
 
         ///no tf publish, send as an observation message to ekf-loc
         Vector3f icp_pose = this->PMTransform2Pose2D(T_base2world_new);
+
+        // cout<<icp_pose<<endl;
 
         ///EKF part, can be //
 

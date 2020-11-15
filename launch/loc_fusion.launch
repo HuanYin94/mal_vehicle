@@ -16,14 +16,17 @@
 	<!--node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="1.95685 -2.19474 -0.1 -0.017 -0.0104 -0.521 -0.853 laser2 laser1 50" />
     <node pkg="tf" type="static_transform_publisher" name="link2_broadcaster" args="7.5012 1.4813 0.962 0 0 -0.3625 0.9320 base_footprint laser2 50" /-->
 
-	<node pkg="tf" type="static_transform_publisher" name="link2_broadcaster" args="7.5012 -1.4813 -0.962 0 0 -0.3625 0.9320 base_footprint laser2 50" />
-	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="-2.05685 1.99474 0 0.0000 0.0000 0.7880 0.6157 laser2 laser1 100" />
+	<!--node pkg="tf" type="static_transform_publisher" name="link2_broadcaster" args="7.5012 -1.4813 -0.962 0 0 -0.3625 0.9320 base_footprint laser2 50" />
+	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="-2.05685 1.99474 0 0.0000 0.0000 0.7880 0.6157 laser2 laser1 100" /-->
+
+	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="-2.0 -2.2 0 0.013 0.012 -0.671 0.74 laser2 laser1 10"/>
+	<node pkg="tf" type="static_transform_publisher" name="link2_broadcaster" args="7.5012 1.4813 0.962 0 0 0.358 0.934 base_footprint laser2 10"/>	
 
 	<node pkg="mal_vehicle" type="loc_fusion" name="loc_fusion" output="screen" >
 		
-		<param name="mag_init_int" value="10"/>
+		<param name="mag_init_int" value="100000"/>
 
-		<param name="loadMapName" value="/home/yh/zhenhua_some/2019.09.13/map_filtered_transformed.vtk"/>
+		<param name="loadMapName" value="/home/yh/maps_zhenhua/2020-11-04_filtered_magworld.vtk"/>
 		<param name="inputFilterYamlName" value="$(find mal_vehicle)/cfg/loc_input_filters.yaml"/>
 		<param name="icpYamlName" value="$(find mal_vehicle)/cfg/loc_icp.yaml"/>
 		
@@ -32,6 +35,11 @@
 		<param name="icp_overlap_min" value="0.3"/>
 
 		<param name="laser_cyc" value="1"/>
+
+		<param name="if_init" value="true"/>
+		<param name="init_x" value="23.988"/>
+		<param name="init_y" value="21.951"/>
+		<param name="init_yaw" value="0.0015"/>
 
 	</node>
 

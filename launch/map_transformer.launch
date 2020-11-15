@@ -7,16 +7,16 @@
 		<param name="x1" value="7.5012"/>
 		<param name="y1" value="1.4813"/>
 		<param name="z1" value="0.962"/>
-		<param name="yaw1" value="-0.7418"/>
+		<param name="yaw1" value="0.72867"/>
 		
 		<!--first frame of mag message when mapping, from rosbag-->
-		<param name="x2" value="50.001"/>
-		<param name="y2" value="11.9797"/>
-		<param name="yaw2" value="0.015"/>
+		<param name="x2" value="23.988"/>
+		<param name="y2" value="21.951"/>
+		<param name="yaw2" value="0.001537"/>
 
 		
-		<param name="loadMapName" value="/home/yh/zhenhua_some/2019.11.01/map_filtered.vtk"/>
-		<param name="saveMapName" value="/home/yh/zhenhua_some/2019.11.01/map_filtered_transformed.vtk"/>
+		<param name="loadMapName" value="/home/yh/maps_zhenhua/2020-11-04_filtered.vtk"/>
+		<param name="saveMapName" value="/home/yh/maps_zhenhua/2020-11-04_filtered_magworld.vtk"/>
 
 	</node>
 

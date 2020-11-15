@@ -3,8 +3,8 @@
     xMax: inf
     yMin: -inf
     yMax: inf
-    zMin: -2.0
-    zMax: 0.0
+    zMin: -inf
+    zMax: inf
     removeInside: 0
 - SurfaceNormalDataPointsFilter:
     knn: 10
@@ -16,5 +16,5 @@
 - OctreeGridDataPointsFilter:
     buildParallel: 1
     maxPointByNode: 1
-    maxSizeByNode: 0.5
+    maxSizeByNode: 0.25
     samplingMethod: 3

@@ -5,8 +5,8 @@
 
 		<param name="filterYamlName" value="$(find mal_vehicle)/cfg/map_filters.yaml"/>
 		
-		<param name="loadMapName" value="/home/yh/zhenhua_some/2019.11.01/map_origin.vtk"/>
-		<param name="saveMapName" value="/home/yh/zhenhua_some/2019.11.01/map_filtered.vtk"/>
+		<param name="loadMapName" value="/home/yh/maps_zhenhua/2020-11-04.vtk"/>
+		<param name="saveMapName" value="/home/yh/maps_zhenhua/2020-11-04_filtered.vtk"/>
 		
 		<param name="intTh" value="150"/>
 	</node>
