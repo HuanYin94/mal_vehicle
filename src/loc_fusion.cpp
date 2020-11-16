@@ -23,7 +23,8 @@ using namespace std;
 using namespace Eigen;
 using namespace PointMatcherSupport;
 
-#define ODOM_TIME 0.02
+// #define ODOM_TIME 0.02 // 50Hz in 2019
+#define ODOM_TIME 0.005 // 200Hz in 2020.11
 
 class loc_fusion
 {
@@ -179,7 +180,7 @@ loc_fusion::loc_fusion(ros::NodeHandle& n):
     if(if_init)
     {
         veh_sta << init_x, init_y, init_yaw;
-        conv = 0*Matrix3f::Identity();
+        conv = 999999999*Matrix3f::Identity();
         this->finalPublish(veh_sta, ros::Time(0));
     }
     else
@@ -187,7 +188,7 @@ loc_fusion::loc_fusion(ros::NodeHandle& n):
         veh_sta << 0,0,0;
     }
 
-    noise_R = 0.1*Matrix3f::Identity();  noise_R(2,2) = 1.0; // motion noise
+    noise_R = 1.0*Matrix3f::Identity();  noise_R(2,2) = 1.0; // motion noise
     noise_P = 0.1*Matrix3f::Identity();// laser noise
     noise_Q = 0.01*Matrix3f::Identity();  // mag noise
     matrix_I = 1*Matrix3f::Identity();
@@ -220,7 +221,7 @@ void loc_fusion::gotMag(const geometry_msgs::PointStamped &magMsgIn)
         // veh_sta(1) = 11;
         // veh_sta(2) = 0;
 
-        conv = 0*Matrix3f::Identity();
+        conv = 999999999*Matrix3f::Identity();
 
         init_flag = true;
         return;

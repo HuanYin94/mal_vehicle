@@ -13,8 +13,10 @@
     keepDensities: 1
 - ObservationDirectionDataPointsFilter
 - OrientNormalsDataPointsFilter 
-- OctreeGridDataPointsFilter:
-    buildParallel: 1
-    maxPointByNode: 1
-    maxSizeByNode: 0.25
-    samplingMethod: 3
+#- OctreeGridDataPointsFilter:
+#    buildParallel: 1
+#    maxPointByNode: 1
+#    maxSizeByNode: 0.5
+#    samplingMethod: 3
+- RandomSamplingDataPointsFilter:
+    prob: 0.1

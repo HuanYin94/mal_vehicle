@@ -19,7 +19,8 @@
 	<!--node pkg="tf" type="static_transform_publisher" name="link2_broadcaster" args="7.5012 -1.4813 -0.962 0 0 -0.3625 0.9320 base_footprint laser2 50" />
 	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="-2.05685 1.99474 0 0.0000 0.0000 0.7880 0.6157 laser2 laser1 100" /-->
 
-	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="-2.0 -2.2 0 0.013 0.012 -0.671 0.74 laser2 laser1 10"/>
+	<!--node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="-2.0 -2.2 0 0.013 0.012 -0.671 0.74 laser2 laser1 10"/-->
+	<node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="-2.05 -2.15 0 0.013 0.012 -0.671 0.74 laser2 laser1 10"/>
 	<node pkg="tf" type="static_transform_publisher" name="link2_broadcaster" args="7.5012 1.4813 0.962 0 0 0.358 0.934 base_footprint laser2 10"/>	
 
 	<node pkg="mal_vehicle" type="loc_fusion" name="loc_fusion" output="screen" >
@@ -37,9 +38,16 @@
 		<param name="laser_cyc" value="1"/>
 
 		<param name="if_init" value="true"/>
+		
+		<!--11-04-11-07-->
 		<param name="init_x" value="23.988"/>
 		<param name="init_y" value="21.951"/>
 		<param name="init_yaw" value="0.0015"/>
+
+		<!--11-04-11-07-->
+		<!--param name="init_x" value="18.6895599365"/>
+		<param name="init_y" value="21.9717216492"/>
+		<param name="init_yaw" value="0.00174"/-->
 
 	</node>
 
