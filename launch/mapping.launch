@@ -52,7 +52,7 @@ ZHENHUA PROJECT IN SUMMER
 		<param name="maxDistNewPoint" value="0.05"/>
 		
 		<!--param name="savePoseFileName" value="/home/yh/some_zhenhua/2019.06.09/laser1_14-24-06.txt"/-->
-		<param name="savePoseFileName" value="/home/yh/zhenhua_some/2019.09.13/mapping_pose.txt"/>
+		<!--param name="savePoseFileName" value="/home/yh/zhenhua_some/2019.09.13/mapping_pose.txt"/-->
 
 	</node>
 
